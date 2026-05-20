@@ -1,0 +1,94 @@
+{
+  "flow_name": "Docling Entity Extraction with Custom Model",
+  "description": "Extraction pipeline using Docling entity extraction with inline HuggingFace model configuration",
+  "global_config": {
+    "doc_column": "content",
+    "disable_validation": "false",
+    "force_ingest": true,
+    "storage": "in-memory",
+    "execute_type": "local"
+  },
+  "flow": [
+    {
+      "name": "ingest",
+      "type": "ingest_local",
+      "config": {
+        "input_folder": "../../../tests/fixtures/invoices",
+        "include_filter": "pdf,docx",
+        "store_binary_content": true
+      }
+    },
+    {
+      "name": "classify",
+      "type": "document_classifier",
+      "config": {
+        "provider": "ollama",
+        "provider_config": {},
+        "model_id": "granite4:latest",
+        "confidence_threshold": 7.0,
+        "doc_column": "content",
+        "output_column": "document_type",
+        "include_confidence": true,
+        "include_reasoning": true,
+        "max_content_length": 8000,
+        "extract_tables": true,
+        "extract_images": true
+      },
+      "depends_on": [
+        "ingest"
+      ]
+    },
+    {
+      "name": "extract",
+      "type": "extract_operator",
+      "config": {
+        "text_extraction_mode": "docling_library",
+        "entity_extraction_mode": "docling",
+        "entity_config": {
+          "model_type": "inline",
+          "inline_model": {
+            "repo_id": "numind/NuExtract-2.0-2B",
+            "inference_framework": "transformers",
+            "scale": 2.0,
+            "temperature": 0.0,
+            "max_new_tokens": 4096,
+            "load_in_8bit": true,
+            "torch_dtype": "bfloat16"
+          }
+        },
+        "doc_column": "content",
+        "extract_tables": true,
+        "extract_images": true,
+        "max_doc_chars": 8000,
+        "max_workers": 2
+      },
+      "depends_on": [
+        "classify"
+      ]
+    },
+    {
+      "name": "chunk",
+      "type": "chunker",
+      "config": {
+        "chunk_size": 512,
+        "chunk_overlap": 50,
+        "chunking_strategy": "simple"
+      },
+      "depends_on": [
+        "extract"
+      ]
+    },
+    {
+      "name": "embed",
+      "type": "embeddings",
+      "config": {
+        "model_name": "nomic-embed-text",
+        "embedding_provider": "ollama",
+        "ollama_base_url": "http://localhost:11434"
+      },
+      "depends_on": [
+        "chunk"
+      ]
+    }
+  ]
+}
