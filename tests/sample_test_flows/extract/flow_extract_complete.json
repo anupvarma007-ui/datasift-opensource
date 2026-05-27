@@ -42,14 +42,18 @@
       "type": "extract_operator",
       "config": {
         "text_extraction_mode": "docling_library",
-        "entity_extraction_mode": "ollama",
+        "entity_extraction_mode": "litellm",
         "doc_column": "content",
         "extract_tables": false,
         "extract_images": false,
         "additional_formats": ["html", "json"],
-        "entity_model_name": "granite4:latest",
+        "entity_model_name": "openai/granite4:latest",
+        "entity_provider_config": {
+          "api_base": "http://localhost:11434/v1",
+          "api_key": "<ollama_key>"
+        },
         "entity_temperature": 0.0,
-        "entity_max_tokens": 4096,
+        "entity_max_tokens": 2000,
         "max_doc_chars": 8000,
         "max_workers": 2
       },
