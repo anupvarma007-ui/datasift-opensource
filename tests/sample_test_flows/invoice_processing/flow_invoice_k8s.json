@@ -24,15 +24,15 @@
         "memory_limit": "4Gi",
         "env": {
           "AWS_ACCESS_KEY_ID": "YOUR_AWS_ACCESS_KEY_ID",
-          "AWS_SECRET_ACCESS_KEY": "YOUR_AWS_SECRET_ACCESS_KEY",
-          "AWS_ENDPOINT_URL": "http://datasift-worker1.fyre.ibm.com:9000",
+          "AWS_SECRET_ACCESS_KEY": "YOUR_AWS_SECRET_ACCESS_KEY",  # pragma: allowlist secret
+          "AWS_ENDPOINT_URL": "http://localhost:9000",
           "AWS_REGION": "us-east-1",
-          "OLLAMA_HOST": "http://datasift-worker1.fyre.ibm.com:11434",
-          "DOCLING_SERVE_URL": "http://datasift-worker1.fyre.ibm.com:30501",
-          "OPENSEARCH_HOST": "datasift-worker1.fyre.ibm.com",
+          "OLLAMA_HOST": "http://localhost:11434",
+          "DOCLING_SERVE_URL": "http://localhost:30501",
+          "OPENSEARCH_HOST": "localhost",
           "OPENSEARCH_PORT": "9200",
           "OPENSEARCH_USERNAME": "admin",
-          "OPENSEARCH_PASSWORD": "YOUR_OPENSEARCH_PASSWORD",
+          "OPENSEARCH_PASSWORD": "YOUR_OPENSEARCH_PASSWORD",  # pragma: allowlist secret
           "OPENSEARCH_USE_SSL": "false",
           "OPENSEARCH_VERIFY_CERTS": "false"
         },
@@ -40,9 +40,9 @@
           "type": "s3",
           "bucket": "datasift-batches",
           "prefix": "tmp/batches/",
-          "endpoint_url": "http://datasift-worker1.fyre.ibm.com:9000",
+          "endpoint_url": "http://localhost:9000",
           "access_key_id": "YOUR_S3_ACCESS_KEY_ID",
-          "secret_access_key": "YOUR_S3_SECRET_ACCESS_KEY",
+          "secret_access_key": "YOUR_S3_SECRET_ACCESS_KEY",  # pragma: allowlist secret
           "region": "us-east-1"
         }
       }
@@ -58,7 +58,7 @@
         "provider": "s3",
         "credentials": {
           "access_key": "YOUR_AWS_ACCESS_KEY",
-          "secret_key": "YOUR_AWS_SECRET_KEY"
+          "secret_key": "YOUR_AWS_SECRET_KEY"  # pragma: allowlist secret
         },
         "connection_params": {
           "bucket": "tm-wkc-storage-1",
@@ -121,10 +121,10 @@
         "create_index": true,
         "batch_size": 100,
         "provider_config": {
-          "host": "datasift-worker1.fyre.ibm.com",
+          "host": "localhost",
           "port": 9200,
           "username": "admin",
-          "password": "MyStrongPass123!",
+          "password": "MyStrongPass123!",  # pragma: allowlist secret
           "use_ssl": false,
           "verify_certs": false,
           "engine": "faiss",
