@@ -24,7 +24,7 @@
         "memory_limit": "4Gi",
         "env": {
           "AWS_ACCESS_KEY_ID": "YOUR_AWS_ACCESS_KEY_ID",
-          "AWS_SECRET_ACCESS_KEY": "YOUR_AWS_SECRET_ACCESS_KEY",  # pragma: allowlist secret
+          "AWS_SECRET_ACCESS_KEY": "<YOUR_AWS_SECRET_ACCESS_KEY>",
           "AWS_ENDPOINT_URL": "http://localhost:9000",
           "AWS_REGION": "us-east-1",
           "OLLAMA_HOST": "http://localhost:11434",
@@ -32,7 +32,7 @@
           "OPENSEARCH_HOST": "localhost",
           "OPENSEARCH_PORT": "9200",
           "OPENSEARCH_USERNAME": "admin",
-          "OPENSEARCH_PASSWORD": "YOUR_OPENSEARCH_PASSWORD",  # pragma: allowlist secret
+          "OPENSEARCH_PASSWORD": "<YOUR_OPENSEARCH_PASSWORD>",
           "OPENSEARCH_USE_SSL": "false",
           "OPENSEARCH_VERIFY_CERTS": "false"
         },
@@ -42,7 +42,7 @@
           "prefix": "tmp/batches/",
           "endpoint_url": "http://localhost:9000",
           "access_key_id": "YOUR_S3_ACCESS_KEY_ID",
-          "secret_access_key": "YOUR_S3_SECRET_ACCESS_KEY",  # pragma: allowlist secret
+          "secret_access_key": "<YOUR_S3_SECRET_ACCESS_KEY>",
           "region": "us-east-1"
         }
       }
@@ -57,8 +57,8 @@
       "config": {
         "provider": "s3",
         "credentials": {
-          "access_key": "YOUR_AWS_ACCESS_KEY",
-          "secret_key": "YOUR_AWS_SECRET_KEY"  # pragma: allowlist secret
+          "access_key": "<YOUR_AWS_ACCESS_KEY>",
+          "secret_key": "<YOUR_AWS_SECRET_KEY>"
         },
         "connection_params": {
           "bucket": "tm-wkc-storage-1",
@@ -99,11 +99,15 @@
       "name": "embeddings",
       "type": "embeddings",
       "config": {
-        "embeddings_type": "ollama",
-        "embeddings_model_id": "granite4",
+        "embeddings_type": "litellm",
+        "embeddings_model_id": "openai/granite4",
         "embeddings_column": "embeddings",
         "overlap_ratio": 0.2,
-        "doc_column": "content"
+        "doc_column": "content",
+        "provider_config": {
+          "api_base": "http://localhost:11434/v1",
+          "api_key": "${OLLAMA_API_KEY}"
+        }
       },
       "depends_on": [
         "chunk"
@@ -124,7 +128,7 @@
           "host": "localhost",
           "port": 9200,
           "username": "admin",
-          "password": "MyStrongPass123!",  # pragma: allowlist secret
+          "password": "<MyStrongPass123!>",
           "use_ssl": false,
           "verify_certs": false,
           "engine": "faiss",
