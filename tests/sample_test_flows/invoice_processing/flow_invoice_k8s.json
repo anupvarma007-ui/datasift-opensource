@@ -75,7 +75,7 @@
       "config": {
         "doc_column": "content",
         "max_workers": 4,
-        "docling_serve_ocr_engine": "tesserocr"
+        "ocr_engine": "tesserocr"
       },
       "depends_on": [
         "ingest"
@@ -99,15 +99,15 @@
       "name": "embeddings",
       "type": "embeddings",
       "config": {
-        "embeddings_type": "litellm",
-        "embeddings_model_id": "openai/granite4",
         "embeddings_column": "embeddings",
         "overlap_ratio": 0.2,
         "doc_column": "content",
         "provider_config": {
           "api_base": "http://localhost:11434/v1",
-          "api_key": "${OLLAMA_API_KEY}"
-        }
+          "api_key": "${OLLAMA_API_KEY}",
+          "model_id": "openai/granite4"
+        },
+        "provider": "litellm"
       },
       "depends_on": [
         "chunk"
