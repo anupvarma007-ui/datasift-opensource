@@ -3,7 +3,7 @@
   "description": "Advanced pipeline with branching: Ingest -> Extract -> Chunk -> Branch -> (Embeddings Model 1, Embeddings Model 2) -> Merge -> Document Set -> OpenSearch",
   "global_config": {
     "doc_column": "content",
-    "disable_validation": "true",
+    "disable_validation": true,
     "force_ingest": true,
     "storage": "in-memory",
     "execute_type": "local"
@@ -15,7 +15,6 @@
       "config": {
         "paths": "./sample_documents",
         "include_filter": "pdf,txt,docx",
-        "store_binary_content": true,
         "max_workers": 4
       }
     },
@@ -84,7 +83,7 @@
       "config": {
         "provider": "litellm",
         "provider_config": {
-          "model_id": "openai/nomic-embed-text",
+          "model_id": "openai/granite-embedding",
           "api_base": "http://localhost:11434/v1",
           "api_key": "${OLLAMA_API_KEY}"
         },
@@ -138,8 +137,8 @@
         "provider_config": {
           "host": "localhost",
           "port": 9200,
-          "username": "<USERNAME>",
-          "password": "<PASSWORD>",
+          "username": "${OPENSEARCH_USERNAME}",
+          "password": "${OPENSEARCH_PASSWORD}",
           "use_ssl": false,
           "verify_certs": false,
           "batch_size": 100,
