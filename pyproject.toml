@@ -126,7 +126,7 @@ telemetry = [
 ]
 
 vlm_asr = [
-    "docling[vlm,asr]",
+    "docling[vlm,asr]==2.105.0",
 ]
 
 [project.scripts]
