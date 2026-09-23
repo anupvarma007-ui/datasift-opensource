@@ -180,13 +180,14 @@ class PrefectEngine(FlowEnginePort):
         flow = self.build_non_execute_flow(flow_name=flow_name)
         flow(TaskType.VALIDATE_FLOW, task, dag, None)
 
-    def _build_flow(self, *, name, flow_impl):
+    def _build_flow(self, *, name, flow_impl, timeout_seconds: int | None = None):
         """Build a Prefect flow for operator execution."""
         prefect_config = self.__get_prefect_config()
+        effective_timeout = timeout_seconds if timeout_seconds is not None else prefect_config["timeout_seconds"]
 
         return flow(
             name=name,
-            timeout_seconds=prefect_config["timeout_seconds"],
+            timeout_seconds=effective_timeout,
             retries=prefect_config["flow_retries"],
             retry_delay_seconds=prefect_config["retry_delay_seconds"],
             log_prints=prefect_config["log_prints"],
@@ -234,7 +235,11 @@ class PrefectEngine(FlowEnginePort):
         self.batch_manager.initialize_batch_semaphore(max_concurrent_batches=max_concurrent_batches)
 
         # 1. Build the inner flow to execute a batch once (reusable for all batches).
-        inner_flow = self._build_flow(name="batch_sub_flow", flow_impl=self.__flow_impl)
+        inner_flow = self._build_flow(
+            name="batch_sub_flow",
+            flow_impl=self.__flow_impl,
+            timeout_seconds=self.__get_prefect_config()["sub_flow_timeout_seconds"],
+        )
 
         # 2. Define a task to execute inner flow.
         #    NO_CACHE avoids result persistence that cache_key_fn silently enabled.
@@ -455,7 +460,12 @@ class PrefectEngine(FlowEnginePort):
             "max_workers": 50,
             "log_prints": True,
             "retry_delay_seconds": 60,
+            # Outer flow timeout: 120000s (33.3h). Large jobs (50k+ docs) can exceed 16.7h.
+            # Inner sub-flow timeout is set separately — each sub-flow handles one batch only.
             "timeout_seconds": 120000,
+            # Sub-flow timeout: 60000s (16.7h). One sub-flow processes a single batch,
+            # so the original 60000s ceiling is appropriate here.
+            "sub_flow_timeout_seconds": 60000,
         }
 
     def __create_task(
