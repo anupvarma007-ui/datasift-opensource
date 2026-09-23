@@ -140,7 +140,7 @@ export function InputFeaturesTab({
         renderToolbarActions={() => (
           <Button
             kind="ghost"
-            size="sm"
+            size="md"
             renderIcon={Maximize}
             iconDescription="Expand table"
             hasIconOnly

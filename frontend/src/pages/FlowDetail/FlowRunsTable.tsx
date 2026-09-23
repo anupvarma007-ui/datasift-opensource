@@ -54,7 +54,7 @@ const STATUS_OPTIONS = [
   { id: 'all',             label: 'All'                   },
   { id: 'run',             label: 'Completed'             },
   { id: 'in_progress',     label: 'In progress'           },
-  { id: 'run_with_issues', label: 'Completed with issues' },
+  { id: 'run_with_issues', label: 'Run with issues' },
   { id: 'failed',          label: 'Failed'                },
   { id: 'cancelled',       label: 'Canceled'              },
 ];
@@ -62,7 +62,7 @@ const STATUS_OPTIONS = [
 export const STATUS_LABELS: Record<RunStatus, string> = {
   run:             'Completed',
   in_progress:     'In progress',
-  run_with_issues: 'Completed with issues',
+  run_with_issues: 'Run with issues',
   failed:          'Failed',
   cancelled:       'Canceled',
 };

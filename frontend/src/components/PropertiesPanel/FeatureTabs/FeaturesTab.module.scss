@@ -5,6 +5,22 @@
 // Wrapper for the entire tab content
 .featuresTab {
   padding-top: $spacing-04;
+
+  // Force the entire toolbar row — search container, toolbar-content wrapper,
+  // and the ghost expand button — to share the same $field background.
+  // On hover, all three switch to $field-hover together.
+  // !important is required throughout to beat Carbon's own specificity.
+  :global(.cds--table-toolbar),
+  :global(.cds--toolbar-content),
+  :global(.cds--btn--ghost) {
+    background-color: $field !important;
+  }
+
+  :global(.cds--table-toolbar:hover),
+  :global(.cds--toolbar-content:hover),
+  :global(.cds--btn--ghost:hover) {
+    background-color: $field-hover !important;
+  }
 }
 
 // Descriptive subtitle below the tab label
