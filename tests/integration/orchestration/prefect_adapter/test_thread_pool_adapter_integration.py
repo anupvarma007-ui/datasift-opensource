@@ -315,8 +315,8 @@ class TestThreadPoolAdapterIntegration:
 
         from docpipe.exceptions.docpipe_exceptions import FlowValidationException
 
+        manager = DocpipeFlowManager(flow_def=bad_flow, enable_execution_reporter=False, configure_logging=False)
         with pytest.raises((FlowValidationException, Exception)):
-            manager = DocpipeFlowManager(flow_def=bad_flow, enable_execution_reporter=False, configure_logging=False)
             manager.execute()
 
 
@@ -382,12 +382,12 @@ class TestThreadPoolOperatorFailureBehaviour:
             with_noop=True,
         )
 
+        manager = DocpipeFlowManager(
+            flow_def=flow_def,
+            enable_execution_reporter=False,
+            configure_logging=False,
+        )
         with pytest.raises((FlowExecutionFailedException, Exception)):
-            manager = DocpipeFlowManager(
-                flow_def=flow_def,
-                enable_execution_reporter=False,
-                configure_logging=False,
-            )
             manager.execute()
 
     def test_continue_on_batch_failure_operator_raises_does_not_propagate(self, monkeypatch):
@@ -502,12 +502,12 @@ class TestThreadPoolSubflowInfraFailureBehaviour:
             with_noop=True,
         )
 
+        manager = DocpipeFlowManager(
+            flow_def=flow_def,
+            enable_execution_reporter=False,
+            configure_logging=False,
+        )
         with pytest.raises((FlowExecutionFailedException, Exception)):
-            manager = DocpipeFlowManager(
-                flow_def=flow_def,
-                enable_execution_reporter=False,
-                configure_logging=False,
-            )
             manager.execute()
 
     def test_continue_on_batch_failure_subflow_infra_failure_does_not_propagate(self, monkeypatch):

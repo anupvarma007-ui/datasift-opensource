@@ -242,8 +242,8 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["PT003", "PT006", "PT009", "PT011", "PT012", "PT013", "PT018", "PT027", "PT028"]
-"tests/*.py" = ["PT003", "PT006", "PT009", "PT011", "PT012", "PT013", "PT018", "PT027", "PT028"]
+"tests/**/*.py" = ["PT009", "PT027"]
+"tests/*.py" = ["PT009", "PT027"]
 
 [tool.ruff.lint.isort]
 # Configure import sorting

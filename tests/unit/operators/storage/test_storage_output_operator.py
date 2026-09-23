@@ -97,7 +97,8 @@ class TestStorageOutputOperatorValidation:
         # Must not raise
         output_tables, metadata = op.transform(table)
 
-        assert output_tables and output_tables[0].num_rows == 2
+        assert output_tables
+        assert output_tables[0].num_rows == 2
         write_statuses = output_tables[0].column("write_status").to_pylist()
         assert all(s == "failed" for s in write_statuses)
         # Downstream flow continues — metadata is returned, not an exception

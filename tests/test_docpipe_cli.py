@@ -208,7 +208,7 @@ class TestSanitizeFlowNameForJobId:
     """
 
     @pytest.mark.parametrize(
-        "flow_name,expected",
+        ("flow_name", "expected"),
         [
             # Valid flow names - simple cases
             ("my-flow", "my-flow"),

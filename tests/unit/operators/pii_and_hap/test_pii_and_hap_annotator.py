@@ -842,7 +842,7 @@ def test_config_validation_invalid_chunk_sizes():
 
 
 @pytest.mark.parametrize(
-    "config_override,expected_attr,expected_value",
+    ("config_override", "expected_attr", "expected_value"),
     [
         # PII threshold edge cases
         ({"pii_threshold": 0.0}, "pii_threshold", 0.0),

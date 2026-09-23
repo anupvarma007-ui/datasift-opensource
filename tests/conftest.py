@@ -234,7 +234,7 @@ def temp_duckdb_path(tmp_path):
         db_path.unlink()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def cleanup_test_document_sets():
     """
     Clean up test document sets after each test.

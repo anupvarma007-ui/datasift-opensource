@@ -746,12 +746,12 @@ class TestWorkPoolAdapterIntegration:
             batch_size=1,
         )
 
+        manager = DocpipeFlowManager(
+            flow_def=bad_flow,
+            enable_execution_reporter=False,
+            configure_logging=False,
+        )
         with pytest.raises(FlowValidationException):
-            manager = DocpipeFlowManager(
-                flow_def=bad_flow,
-                enable_execution_reporter=False,
-                configure_logging=False,
-            )
             manager.execute()
 
     def test_continue_on_batch_failure_does_not_raise(self, prefect_infrastructure, batch_storage_dir, monkeypatch):
@@ -845,12 +845,12 @@ class TestWorkPoolAdapterIntegration:
             continue_on_batch_failure=False,
         )
 
+        manager = DocpipeFlowManager(
+            flow_def=flow_def,
+            enable_execution_reporter=False,
+            configure_logging=False,
+        )
         with pytest.raises(FlowExecutionFailedException):
-            manager = DocpipeFlowManager(
-                flow_def=flow_def,
-                enable_execution_reporter=False,
-                configure_logging=False,
-            )
             manager.execute()
 
     def test_continue_on_batch_failure_worker_error_does_not_raise(
@@ -886,10 +886,10 @@ class TestWorkPoolAdapterIntegration:
         )
 
         # All batches fail → all-failed path raises even in continue mode.
+        manager = DocpipeFlowManager(
+            flow_def=flow_def,
+            enable_execution_reporter=False,
+            configure_logging=False,
+        )
         with pytest.raises(FlowExecutionFailedException):
-            manager = DocpipeFlowManager(
-                flow_def=flow_def,
-                enable_execution_reporter=False,
-                configure_logging=False,
-            )
             manager.execute()

@@ -156,15 +156,15 @@ class TestEmbeddingsOperatorInitialization:
 
     def test_init_with_invalid_provider(self):
         """Test initialization with invalid provider."""
+        from docpipe.exceptions.docpipe_exceptions import DocpipeException
+
         config = {
             "provider": "invalid_provider",
             "model_id": "test-model",
         }
 
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(DocpipeException, match="Unsupported"):
             EmbeddingsOperator(config)
-
-        assert "unsupported" in str(exc_info.value).lower() or "invalid" in str(exc_info.value).lower()
 
     @patch("docpipe.core.adapters.llm_adapter_factory.LLMAdapterFactory.create_embedding_adapter")
     def test_get_required_features(self, mock_factory, litellm_config, mock_llm_adapter):

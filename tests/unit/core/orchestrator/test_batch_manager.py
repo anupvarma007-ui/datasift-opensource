@@ -377,7 +377,8 @@ class TestBatchUUIDPropagation:
         assert hasattr(batches[0], "batch_id")
         assert batches[0].batch_id is not None
         # Verify it's a non-empty string
-        assert isinstance(batches[0].batch_id, str) and len(batches[0].batch_id) > 0
+        assert isinstance(batches[0].batch_id, str)
+        assert len(batches[0].batch_id) > 0
 
 
 class TestEmptyBatchFiltering:

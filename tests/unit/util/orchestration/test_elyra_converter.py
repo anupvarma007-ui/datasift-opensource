@@ -769,8 +769,10 @@ class TestElyraConverterInternalToElyra:
 
         nodes = {n["op"]: n for n in result["pipelines"][0]["nodes"]}
         extract = nodes["extract_operator"]
-        assert "inputs" in extract and len(extract["inputs"]) == 1
-        assert "outputs" in extract and len(extract["outputs"]) == 1
+        assert "inputs" in extract
+        assert len(extract["inputs"]) == 1
+        assert "outputs" in extract
+        assert len(extract["outputs"]) == 1
 
     def test_root_node_has_no_inputs(self, *, converter, simple_internal_flow):
         """A node with no input_edges must not have an 'inputs' key."""
