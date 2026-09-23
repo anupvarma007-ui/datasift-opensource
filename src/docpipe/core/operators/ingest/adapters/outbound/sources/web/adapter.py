@@ -6,6 +6,7 @@ import httpx
 from langchain_community.document_loaders import RecursiveUrlLoader
 from pydantic import BaseModel
 
+from docpipe.core.constants.operator_constants import OperatorConstants
 from docpipe.core.operators.ingest.adapters.outbound.sources.factories.source_factory import register_source_adapter
 from docpipe.core.operators.ingest.adapters.outbound.sources.web.config import WebPageSourceConfig
 from docpipe.core.operators.ingest.domain.models import Document
@@ -18,9 +19,9 @@ from docpipe.utils.infrastructure.logging import get_logger
 logger = get_logger(__name__)
 
 _CONTENT_TYPE_TO_EXTENSION: dict[str, str] = {
-    "application/pdf": ".pdf",
-    "text/html": ".html",
-    "text/plain": ".txt",
+    OperatorConstants.MimeTypes.PDF: OperatorConstants.FileExtensions.EXT_PDF,
+    OperatorConstants.MimeTypes.HTML: OperatorConstants.FileExtensions.EXT_HTML,
+    OperatorConstants.MimeTypes.PLAIN: OperatorConstants.FileExtensions.EXT_TXT,
 }
 
 
@@ -54,12 +55,14 @@ class WebPageSourceAdapter(DocumentSourcePort):
             config=RestClientConfig(),
         )
 
-    def _detect_extension(self, *, url: str, timeout: int) -> str:
-        """Issue a HEAD request to detect the file extension from the Content-Type header.
+    def _detect_extension(self, *, url: str, timeout: int) -> tuple[str, str]:
+        """Issue a HEAD request to detect the file extension and MIME type from the Content-Type header.
 
-        Falls back to '.html' on any error or unrecognised content type so that
+        Returns a (extension, content_type) tuple.
+        Falls back to ('.html', 'text/html') on any error or unrecognised content type so that
         RecursiveUrlLoader can still process the document.
         """
+        _default = (OperatorConstants.FileExtensions.EXT_HTML, OperatorConstants.MimeTypes.HTML)
         try:
             response = self._rest_client.call_rest(
                 method=RestMethod.HEAD,
@@ -68,11 +71,16 @@ class WebPageSourceAdapter(DocumentSourcePort):
                 timeout=timeout,
             )
             if response.status_code == 405:
-                return ".html"
-            content_type = response.headers.get("Content-Type", "text/html").split(";")[0].strip()
-            return _CONTENT_TYPE_TO_EXTENSION.get(content_type, ".html")
+                return _default
+            content_type = response.headers.get("Content-Type", OperatorConstants.MimeTypes.HTML).split(";")[0].strip()
+            extension = _CONTENT_TYPE_TO_EXTENSION.get(content_type, OperatorConstants.FileExtensions.EXT_HTML)
+            # If content_type was not in the map, normalise it to the HTML fallback too
+            resolved_content_type = (
+                content_type if content_type in _CONTENT_TYPE_TO_EXTENSION else OperatorConstants.MimeTypes.HTML
+            )
+            return extension, resolved_content_type
         except Exception:
-            return ".html"
+            return _default
 
     # Metadata for connector discovery
     SOURCE_NAME = "web"
@@ -132,12 +140,8 @@ class WebPageSourceAdapter(DocumentSourcePort):
                         # Store HTML content as bytes for consistency with other adapters
                         content = lc_doc.page_content.encode("utf-8")
 
-                        # Detect extension via HEAD request before constructing the document
-                        extension = self._detect_extension(url=source_url, timeout=config.timeout)
-                        content_type = next(
-                            (ct for ct, ext in _CONTENT_TYPE_TO_EXTENSION.items() if ext == extension),
-                            "text/html",
-                        )
+                        # Detect extension and MIME type via HEAD request
+                        extension, content_type = self._detect_extension(url=source_url, timeout=config.timeout)
 
                         # Create domain document
                         document = Document(

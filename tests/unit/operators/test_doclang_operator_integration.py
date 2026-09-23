@@ -653,3 +653,74 @@ class TestPIIAndHAPDocFormat:
 
         for text in annotated_texts:
             assert text == PLAIN_TEXT
+
+
+# ===========================================================================
+# EmbeddingsOperator — PR 2 DocLang Routing Tests
+# ===========================================================================
+
+
+class TestEmbeddingsDocFormat:
+    """Tests verifying EmbeddingsOperator cleans DocLang XML before embedding."""
+
+    def test_embeddings_doc_format_attribute(self, monkeypatch):
+        """EmbeddingsOperator inherits doc_format."""
+        from docpipe.core.operators.functional.embeddings.embeddings_operator import EmbeddingsOperator
+
+        monkeypatch.setattr(EmbeddingsOperator, "_initialize_embedding_adapter", lambda self: MagicMock())
+        op = EmbeddingsOperator({"provider": "ollama", "doc_format": "doclang"})
+        assert op.doc_format == "doclang"
+
+    def test_embeddings_parse_chunked_content_passes_chunks_as_is(self, monkeypatch):
+        """_parse_chunked_content passes chunk text without re-stripping."""
+        from docpipe.core.operators.functional.embeddings.embeddings_operator import EmbeddingsOperator
+
+        monkeypatch.setattr(EmbeddingsOperator, "_initialize_embedding_adapter", lambda self: MagicMock())
+        op = EmbeddingsOperator({"provider": "ollama", "doc_format": "doclang"})
+
+        chunk_text = "Clean chunk with <T> type annotation"
+        table = pa.table(
+            {
+                "id": ["0"],
+                "chunked_content": [[{"chunk": chunk_text, "chunk_sequence_number": 0}]],
+            }
+        )
+        texts = op._parse_chunked_content(table=table, idx=0, doc_name="doc.xml")
+        assert len(texts) == 1
+        assert texts[0] == chunk_text
+
+    def test_embeddings_get_full_document_content_cleans_doclang(self, monkeypatch):
+        """_get_full_document_content strips DocLang XML when doc_format=doclang."""
+        from docpipe.core.operators.functional.embeddings.embeddings_operator import EmbeddingsOperator
+
+        monkeypatch.setattr(EmbeddingsOperator, "_initialize_embedding_adapter", lambda self: MagicMock())
+        op = EmbeddingsOperator({"provider": "ollama", "doc_format": "doclang"})
+
+        xml_doc = '<doclang version="0.7"><text>Full doc text</text></doclang>'
+        table = pa.table(
+            {
+                "id": ["0"],
+                "content": [xml_doc],
+            }
+        )
+        texts = op._get_full_document_content(table=table, idx=0)
+        assert len(texts) == 1
+        assert "<" not in texts[0]
+        assert "Full doc text" in texts[0]
+
+    def test_embeddings_markdown_passes_through_as_is(self, monkeypatch):
+        """_parse_chunked_content preserves markdown text when doc_format=markdown."""
+        from docpipe.core.operators.functional.embeddings.embeddings_operator import EmbeddingsOperator
+
+        monkeypatch.setattr(EmbeddingsOperator, "_initialize_embedding_adapter", lambda self: MagicMock())
+        op = EmbeddingsOperator({"provider": "ollama", "doc_format": "markdown"})
+
+        md_chunk = "# Heading\n\nBody text"
+        table = pa.table(
+            {
+                "id": ["0"],
+                "chunked_content": [[{"chunk": md_chunk, "chunk_sequence_number": 0}]],
+            }
+        )
+        texts = op._parse_chunked_content(table=table, idx=0, doc_name="doc.md")
+        assert texts[0] == md_chunk

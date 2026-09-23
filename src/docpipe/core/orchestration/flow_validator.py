@@ -266,55 +266,78 @@ class FlowValidator:
             return [FlowValidator._sanitize_vault_refs_for_validation(item, key=key) for item in value]
         return value
 
-    def _validate_vault_references(self, *, dag: list, validate_results: ValidateStepResults) -> None:
-        """Validate vault reference URIs and warn when referenced provider is not registered."""
+    @staticmethod
+    def _collect_vault_refs(obj: object, *, prefix: str = "") -> list[tuple[str, str]]:
+        """Recursively collect (path, vault_uri) pairs from an object."""
+        from docpipe.integrations.secrets.secret_provider import is_vault_reference
+
+        if isinstance(obj, str) and is_vault_reference(obj):
+            return [(prefix, obj)]
+        if isinstance(obj, dict):
+            found_dict: list[tuple[str, str]] = []
+            for k, v in obj.items():
+                found_dict.extend(FlowValidator._collect_vault_refs(v, prefix=f"{prefix}.{k}" if prefix else str(k)))
+            return found_dict
+        if isinstance(obj, list):
+            found_list: list[tuple[str, str]] = []
+            for i, item in enumerate(obj):
+                found_list.extend(FlowValidator._collect_vault_refs(item, prefix=f"{prefix}[{i}]"))
+            return found_list
+        return []
+
+    @staticmethod
+    def _validate_single_vault_ref(
+        *,
+        path: str,
+        ref: str,
+        op_def: dict[str, Any],
+        validate_results: ValidateStepResults,
+    ) -> None:
+        """Validate a single vault reference URI and record any error or warning."""
         from docpipe.integrations.secrets.secret_provider import (
             get_provider,
-            is_vault_reference,
             parse_vault_reference,
         )
 
-        def _collect_vault_refs(obj: object, prefix: str = "") -> list[tuple[str, str]]:
-            found: list[tuple[str, str]] = []
-            if isinstance(obj, str) and is_vault_reference(obj):
-                found.append((prefix, obj))
-            elif isinstance(obj, dict):
-                for k, v in obj.items():
-                    found.extend(_collect_vault_refs(v, f"{prefix}.{k}" if prefix else str(k)))
-            elif isinstance(obj, list):
-                for i, item in enumerate(obj):
-                    found.extend(_collect_vault_refs(item, f"{prefix}[{i}]"))
-            return found
+        try:
+            provider_name, _, _ = parse_vault_reference(ref)
+        except Exception:
+            add_validation_alert(
+                message=ValidationMessage(
+                    message=f"Config key '{path}' contains a malformed vault URI: '{ref}'.",
+                    message_code="VAULT_URI_MALFORMED",
+                ),
+                op_def=op_def,
+                alerts=validate_results.errors,
+            )
+            return
 
+        if not provider_name or get_provider(name=provider_name) is None:
+            add_validation_alert(
+                message=ValidationMessage(
+                    message=(
+                        f"Config key '{path}' references vault provider "
+                        f"'{provider_name}' which is not currently registered. "
+                        "Set DOCPIPE_VAULT_ENABLED=true and ensure "
+                        "VAULT_ROLE_ID / VAULT_SECRET_ID are set."
+                    ),
+                    message_code="VAULT_PROVIDER_NOT_REGISTERED",
+                ),
+                op_def=op_def,
+                alerts=validate_results.warnings,
+            )
+
+    def _validate_vault_references(self, *, dag: list, validate_results: ValidateStepResults) -> None:
+        """Validate vault reference URIs and warn when referenced provider is not registered."""
         for op_def in dag:
             config = op_def.get(OperatorConstants.Config.CONFIG, {})
-            for path, ref in _collect_vault_refs(config):
-                try:
-                    provider_name, _, _ = parse_vault_reference(ref)
-                except Exception:
-                    add_validation_alert(
-                        message=ValidationMessage(
-                            message=f"Config key '{path}' contains a malformed vault URI: '{ref}'.",
-                            message_code="VAULT_URI_MALFORMED",
-                        ),
-                        op_def=op_def,
-                        alerts=validate_results.errors,
-                    )
-                    continue
-                if not provider_name or get_provider(name=provider_name) is None:
-                    add_validation_alert(
-                        message=ValidationMessage(
-                            message=(
-                                f"Config key '{path}' references vault provider "
-                                f"'{provider_name}' which is not currently registered. "
-                                "Set DOCPIPE_VAULT_ENABLED=true and ensure "
-                                "VAULT_ROLE_ID / VAULT_SECRET_ID are set."
-                            ),
-                            message_code="VAULT_PROVIDER_NOT_REGISTERED",
-                        ),
-                        op_def=op_def,
-                        alerts=validate_results.warnings,
-                    )
+            for path, ref in self._collect_vault_refs(config):
+                self._validate_single_vault_ref(
+                    path=path,
+                    ref=ref,
+                    op_def=op_def,
+                    validate_results=validate_results,
+                )
 
     def validate_dag(self, *, flow_def: FlowConfig, global_config: FlowConfig) -> None:
         """Validate the DAG structure and all nodes.
@@ -397,6 +420,7 @@ class FlowValidator:
         validate_results = ValidateStepResults(available_features={}, errors=errors, warnings=warnings)
         session_info = get_session_info()
 
+        self._validate_global_config_values(global_config=global_config, validate_results=validate_results)
         self._validate_root_operator(dag=dag, validate_results=validate_results)
         self._validate_acl_operator_placement(dag=dag, validate_results=validate_results)
         self._validate_storage_output_operator_placement(dag=dag, validate_results=validate_results)
@@ -919,6 +943,21 @@ class FlowValidator:
                 }
 
             results[node_id] = task(task_name, op_def, prev_result, link_name)
+
+    def _validate_global_config_values(
+        self, *, global_config: dict[str, Any], validate_results: ValidateStepResults
+    ) -> None:
+        """Validate global configuration values such as doc_format."""
+        doc_format = global_config.get(OperatorConstants.DOC_FORMAT_KEY)
+        if doc_format is not None:
+            valid_formats = [f.value for f in OperatorConstants.DocFormat]
+            if doc_format not in valid_formats:
+                validate_results.errors.append(
+                    ValidationAlert(
+                        ErrorCode.FLOW_VALIDATION_FAILED.value,
+                        f"Invalid doc_format '{doc_format}'. Supported values are: {', '.join(valid_formats)}",
+                    )
+                )
 
     def _validate_root_operator(self, *, dag: list, validate_results: ValidateStepResults):
         """Validate that the root operator of the DAG (no incoming edges) is an Ingest operator.

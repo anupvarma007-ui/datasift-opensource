@@ -505,6 +505,28 @@ class TestFlowValidator:
 
         assert result is False
 
+    def test_validate_global_config_doc_format_valid(self):
+        """Test global_config with valid doc_format passes validation."""
+        validator = FlowValidator.__new__(FlowValidator)
+        validate_results = ValidateStepResults(available_features={}, errors=[], warnings=[])
+        validator._validate_global_config_values(
+            global_config={"doc_format": "doclang"}, validate_results=validate_results
+        )
+        assert len(validate_results.errors) == 0
+
+        validator._validate_global_config_values(
+            global_config={"doc_format": "markdown"}, validate_results=validate_results
+        )
+        assert len(validate_results.errors) == 0
+
+    def test_validate_global_config_doc_format_invalid(self):
+        """Test global_config with invalid doc_format adds an error."""
+        validator = FlowValidator.__new__(FlowValidator)
+        validate_results = ValidateStepResults(available_features={}, errors=[], warnings=[])
+        validator._validate_global_config_values(global_config={"doc_format": "xml"}, validate_results=validate_results)
+        assert len(validate_results.errors) == 1
+        assert "Invalid doc_format 'xml'" in validate_results.errors[0]["message"]
+
 
 class TestFlowValidatorIntegration:
     """Integration tests for flow validation with real orchestrator."""

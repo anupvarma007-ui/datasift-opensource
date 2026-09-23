@@ -185,6 +185,39 @@ def has_vault_references(value: Any) -> bool:
     return False
 
 
+def _parse_secret_json_if_applicable(secret: Any) -> Any:
+    """Parse JSON string back to native Python object if secret is JSON-formatted."""
+    if isinstance(secret, str):
+        stripped = secret.strip()
+        if stripped.startswith(("{", "[")):
+            try:
+                return json.loads(stripped)
+            except json.JSONDecodeError:
+                pass
+    return secret
+
+
+def _resolve_string_vault_ref(*, ref_string: str) -> Any:
+    """Resolve a single vault reference string if applicable, or return it unchanged."""
+    ref = parse_reference(ref_string)
+    if ref is None:
+        return ref_string
+
+    provider = _providers.get(ref.provider)
+    if provider is None:
+        raise ConfigurationError(
+            f"Secret provider '{ref.provider}' not registered. "
+            "Vault initialization failed at startup — check logs for details. "
+            "Common causes: VAULT_ROLE_ID/VAULT_SECRET_ID not set, "
+            "or Vault unreachable at VAULT_ADDR. "
+            "Enable debug logging with DS_LOG_LEVEL=DEBUG for full detail."
+        )
+
+    logger.debug("Resolving vault reference: provider=%s, path=%s, key=%s", ref.provider, ref.path, ref.key)
+    secret = provider.get_secret(path=ref.path, key=ref.key)
+    return _parse_secret_json_if_applicable(secret)
+
+
 def resolve_value(value: Any) -> Any:
     """Resolve vault references in a value, recursively.
 
@@ -205,35 +238,7 @@ def resolve_value(value: Any) -> Any:
             cannot be retrieved from the backend.
     """
     if isinstance(value, str):
-        ref = parse_reference(value)
-        if ref is None:
-            return value
-
-        provider = _providers.get(ref.provider)
-        if provider is None:
-            raise ConfigurationError(
-                f"Secret provider '{ref.provider}' not registered. "
-                "Vault initialization failed at startup — check logs for details. "
-                "Common causes: VAULT_ROLE_ID/VAULT_SECRET_ID not set, "
-                "or Vault unreachable at VAULT_ADDR. "
-                "Enable debug logging with DS_LOG_LEVEL=DEBUG for full detail."
-            )
-
-        logger.debug("Resolving vault reference: provider=%s, path=%s, key=%s", ref.provider, ref.path, ref.key)
-        secret = provider.get_secret(path=ref.path, key=ref.key)
-
-        # If the resolved secret is a JSON object or array string, parse it back
-        # to a native Python value. This supports storing structured credentials
-        # (e.g. {"access_key": "...", "secret_key": "..."}) as a single vault key.
-        if isinstance(secret, str):
-            stripped = secret.strip()
-            if stripped.startswith(("{", "[")):
-                try:
-                    return json.loads(stripped)
-                except json.JSONDecodeError:
-                    pass
-
-        return secret
+        return _resolve_string_vault_ref(ref_string=value)
 
     if isinstance(value, dict):
         return {k: resolve_value(v) for k, v in value.items()}

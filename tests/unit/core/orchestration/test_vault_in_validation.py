@@ -91,3 +91,40 @@ def test_validate_vault_references_alert() -> None:
     validator._validate_vault_references(dag=dag, validate_results=validate_results_clean)
     assert len(validate_results_clean.warnings) == 0
     clear_providers()
+
+
+def test_collect_vault_refs() -> None:
+    """Test _collect_vault_refs extracts all vault reference URIs with their object paths."""
+    config = {
+        "api_key": "vault://hashicorp/llm/openai#key",  # pragma: allowlist secret
+        "nested": {
+            "token": "vault://provider1/auth#tok",  # pragma: allowlist secret
+            "plain": "value",
+        },
+        "list_items": [
+            "plain_entry",
+            "vault://provider2/list#item",
+        ],
+        "plain_number": 42,
+    }
+    refs = FlowValidator._collect_vault_refs(config)
+    assert ("api_key", "vault://hashicorp/llm/openai#key") in refs  # pragma: allowlist secret
+    assert ("nested.token", "vault://provider1/auth#tok") in refs  # pragma: allowlist secret
+    assert ("list_items[1]", "vault://provider2/list#item") in refs
+    assert len(refs) == 3
+
+
+def test_validate_single_vault_ref_malformed() -> None:
+    """Test _validate_single_vault_ref produces error alert on malformed URI."""
+    validate_results = ValidateStepResults(available_features={}, errors=[], warnings=[])
+    op_def = {OperatorConstants.Columns.NAME: "node_1"}
+
+    FlowValidator._validate_single_vault_ref(
+        path="credentials",
+        ref="vault://",
+        op_def=op_def,
+        validate_results=validate_results,
+    )
+    assert len(validate_results.errors) == 1
+    assert "malformed vault URI" in validate_results.errors[0].message
+    assert len(validate_results.warnings) == 0

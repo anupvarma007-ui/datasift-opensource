@@ -1089,6 +1089,8 @@ Example format: {"customer": {"name": "John Doe", "email": "john@example.com"}, 
 
         # Standard Document Types
         PDF: Final[str] = "application/pdf"
+        HTML: Final[str] = "text/html"
+        PLAIN: Final[str] = "text/plain"
 
         # Google Workspace Document Types
         GOOGLE_APPS_PREFIX: Final[str] = "application/vnd.google-apps."

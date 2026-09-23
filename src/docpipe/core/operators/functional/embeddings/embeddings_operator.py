@@ -400,7 +400,7 @@ class EmbeddingsOperator(AbstractOperator):  # type: ignore[misc]
         }
 
     @staticmethod
-    def _build_chunk_text_for_embedding(chunk: dict[str, Any]) -> str:
+    def _build_chunk_text_for_embedding(*, chunk: dict[str, Any]) -> str:
         """
         Prepends summary to chunk text if summary is present.
         chunk text will be generated as : abstract: <summary>\ncontent: <chunk_text>
@@ -682,7 +682,8 @@ class EmbeddingsOperator(AbstractOperator):  # type: ignore[misc]
                     texts.append(chunk)
             else:
                 logger.warning(
-                    f"Skipping chunk with unexpected type: {type(chunk).__name__}",
+                    "Skipping chunk with unexpected type: %s",
+                    type(chunk).__name__,
                     extra=self.common_log_arguments,
                 )
 
@@ -690,7 +691,9 @@ class EmbeddingsOperator(AbstractOperator):  # type: ignore[misc]
             raise DocpipeException("No valid text chunks found after parsing")
 
         logger.debug(
-            f"Processing {len(texts)} chunks for document: {doc_name}",
+            "Processing %s chunks for document: %s",
+            len(texts),
+            doc_name,
             extra=self.common_log_arguments,
         )
         return texts
@@ -712,6 +715,12 @@ class EmbeddingsOperator(AbstractOperator):  # type: ignore[misc]
         content: str = table[self.doc_column][idx].as_py()
         if not content:
             raise DocpipeException(f"Document content column '{self.doc_column}' is empty or missing")
+
+        # Convert DocLang to markdown for unchunked pipelines where EmbeddingsOperator
+        # operates directly on the raw document content column without a preceding ChunkerOperator
+        if self.doc_format == OperatorConstants.DocFormat.DOCLANG:
+            content = OperatorUtils.doclang_to_markdown(content)
+
         return [content]
 
     def _handle_doc_hash_generation_failure(

@@ -60,6 +60,16 @@ logger = get_logger()
 # that different pipeline configs (e.g. standard vs OCR-disabled) remain separate.
 _DOCLING_AVAILABLE = importlib.util.find_spec("docling") is not None
 
+# Pre-instantiate DocLangDocDeserializer at module import time under Python's import lock.
+# DocLangDocDeserializer is stateless pure-Python/Pydantic code and completely thread-safe.
+_DOCLANG_DESERIALIZER: Any | None = None
+try:
+    from docling_core.transforms.deserializer.doclang import DocLangDocDeserializer
+
+    _DOCLANG_DESERIALIZER = DocLangDocDeserializer()
+except ImportError:
+    pass
+
 # Thread-local storage: each thread has its own dict[cache_key -> DocumentConverter]
 _thread_local_converters = threading.local()
 
@@ -1458,18 +1468,24 @@ class OperatorUtils:
         import re
 
         try:
-            from docling_core.transforms.deserializer.doclang import DocLangDocDeserializer
-
-            return DocLangDocDeserializer().deserialize_str(text).export_to_markdown()
+            deserializer = OperatorUtils.get_doclang_deserializer()
+            if deserializer is not None:
+                return deserializer.deserialize_str(text).export_to_markdown()
+            raise ImportError("docling_core is not available")
         except ImportError:
             logger.warning(
                 "docling_core is not available (slim install without [extract]); "
                 "falling back to regex tag strip for DocLang content"
             )
             return re.sub(r"<[^>]+>", "", text)
-        except Exception:
-            logger.warning("DocLang deserialisation failed; falling back to regex tag strip")
+        except Exception as e:
+            logger.warning("DocLang deserialisation failed: %s; falling back to regex tag strip", e)
             return re.sub(r"<[^>]+>", "", text)
+
+    @staticmethod
+    def get_doclang_deserializer() -> Any | None:
+        """Get the module-level pre-instantiated DocLangDocDeserializer instance."""
+        return _DOCLANG_DESERIALIZER
 
     @staticmethod
     def get_markdown_content_col(

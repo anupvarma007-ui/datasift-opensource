@@ -224,7 +224,7 @@ class TestWebPageSourceAdapter:
                 "docpipe.core.operators.ingest.adapters.outbound.sources.web.adapter.RecursiveUrlLoader",
                 return_value=mock_loader,
             ),
-            patch.object(adapter, "_detect_extension", return_value=".html"),
+            patch.object(adapter, "_detect_extension", return_value=(".html", "text/html")),
         ):
             docs = asyncio.run(collect_async(adapter.fetch_documents(config=config)))
 
@@ -260,7 +260,7 @@ class TestWebPageSourceAdapter:
                 "docpipe.core.operators.ingest.adapters.outbound.sources.web.adapter.RecursiveUrlLoader",
                 return_value=mock_loader,
             ),
-            patch.object(adapter, "_detect_extension", return_value=".html"),
+            patch.object(adapter, "_detect_extension", return_value=(".html", "text/html")),
         ):
             docs = asyncio.run(collect_async(adapter.fetch_documents(config=config)))
 
@@ -281,7 +281,7 @@ class TestWebPageSourceAdapter:
                 "docpipe.core.operators.ingest.adapters.outbound.sources.web.adapter.RecursiveUrlLoader",
                 return_value=mock_loader,
             ) as mock_loader_class,
-            patch.object(adapter, "_detect_extension", return_value=".html"),
+            patch.object(adapter, "_detect_extension", return_value=(".html", "text/html")),
         ):
             asyncio.run(collect_async(adapter.fetch_documents(config=config)))
 
@@ -303,7 +303,7 @@ class TestWebPageSourceAdapter:
                 "docpipe.core.operators.ingest.adapters.outbound.sources.web.adapter.RecursiveUrlLoader",
                 return_value=mock_loader,
             ) as mock_loader_class,
-            patch.object(adapter, "_detect_extension", return_value=".html"),
+            patch.object(adapter, "_detect_extension", return_value=(".html", "text/html")),
         ):
             asyncio.run(collect_async(adapter.fetch_documents(config=config)))
 
@@ -324,7 +324,7 @@ class TestWebPageSourceAdapter:
                 "docpipe.core.operators.ingest.adapters.outbound.sources.web.adapter.RecursiveUrlLoader",
                 return_value=mock_loader,
             ) as mock_loader_class,
-            patch.object(adapter, "_detect_extension", return_value=".html"),
+            patch.object(adapter, "_detect_extension", return_value=(".html", "text/html")),
         ):
             asyncio.run(collect_async(adapter.fetch_documents(config=config)))
 
@@ -349,7 +349,7 @@ class TestWebPageSourceAdapter:
                 "docpipe.core.operators.ingest.adapters.outbound.sources.web.adapter.RecursiveUrlLoader",
                 return_value=mock_loader,
             ),
-            patch.object(adapter, "_detect_extension", return_value=".html"),
+            patch.object(adapter, "_detect_extension", return_value=(".html", "text/html")),
         ):
             docs = asyncio.run(collect_async(adapter.fetch_documents(config=config)))
 
@@ -382,7 +382,7 @@ class TestWebPageSourceAdapter:
                 "docpipe.core.operators.ingest.adapters.outbound.sources.web.adapter.RecursiveUrlLoader",
                 return_value=mock_loader,
             ),
-            patch.object(adapter, "_detect_extension", return_value=".html"),
+            patch.object(adapter, "_detect_extension", return_value=(".html", "text/html")),
         ):
             docs = asyncio.run(collect_async(adapter.fetch_documents(config=config)))
 
@@ -407,7 +407,7 @@ class TestWebPageSourceAdapter:
                 "docpipe.core.operators.ingest.adapters.outbound.sources.web.adapter.RecursiveUrlLoader",
                 return_value=mock_loader,
             ),
-            patch.object(adapter, "_detect_extension", return_value=".html"),
+            patch.object(adapter, "_detect_extension", return_value=(".html", "text/html")),
         ):
             docs = asyncio.run(collect_async(adapter.fetch_documents(config=config)))
 
@@ -426,7 +426,7 @@ class TestWebPageSourceAdapter:
                 "docpipe.core.operators.ingest.adapters.outbound.sources.web.adapter.RecursiveUrlLoader",
                 side_effect=ImportError("No module named 'langchain_community'"),
             ),
-            patch.object(adapter, "_detect_extension", return_value=".html"),
+            patch.object(adapter, "_detect_extension", return_value=(".html", "text/html")),
         ):
             # The adapter should raise DocpipeException when import fails
             with pytest.raises(DocpipeException) as exc_info:
@@ -604,7 +604,7 @@ class TestWebPageSourceAdapter:
                 "docpipe.core.operators.ingest.adapters.outbound.sources.web.adapter.RecursiveUrlLoader",
                 return_value=mock_loader,
             ),
-            patch.object(adapter, "_detect_extension", return_value=".html"),
+            patch.object(adapter, "_detect_extension", return_value=(".html", "text/html")),
         ):
             docs = asyncio.run(collect_async(adapter.fetch_documents(config=config)))
 
@@ -637,7 +637,7 @@ class TestWebPageSourceAdapter:
                 "docpipe.core.operators.ingest.adapters.outbound.sources.web.adapter.RecursiveUrlLoader",
                 return_value=mock_loader,
             ),
-            patch.object(adapter, "_detect_extension", return_value=".html"),
+            patch.object(adapter, "_detect_extension", return_value=(".html", "text/html")),
         ):
             docs = asyncio.run(collect_async(adapter.fetch_documents(config=config)))
 
@@ -666,7 +666,7 @@ class TestWebPageSourceAdapter:
                 "docpipe.core.operators.ingest.adapters.outbound.sources.web.adapter.RecursiveUrlLoader",
                 return_value=mock_loader,
             ),
-            patch.object(adapter, "_detect_extension", return_value=".html"),
+            patch.object(adapter, "_detect_extension", return_value=(".html", "text/html")),
         ):
             docs = asyncio.run(collect_async(adapter.fetch_documents(config=config)))
 
@@ -695,7 +695,7 @@ class TestWebPageSourceAdapter:
                 "docpipe.core.operators.ingest.adapters.outbound.sources.web.adapter.RecursiveUrlLoader",
                 return_value=mock_loader,
             ),
-            patch.object(adapter, "_detect_extension", return_value=".html"),
+            patch.object(adapter, "_detect_extension", return_value=(".html", "text/html")),
         ):
             docs = asyncio.run(collect_async(adapter.fetch_documents(config=config)))
 
@@ -724,7 +724,7 @@ class TestWebPageSourceAdapter:
                 "docpipe.core.operators.ingest.adapters.outbound.sources.web.adapter.RecursiveUrlLoader",
                 return_value=mock_loader,
             ),
-            patch.object(adapter, "_detect_extension", return_value=".pdf"),
+            patch.object(adapter, "_detect_extension", return_value=(".pdf", "application/pdf")),
         ):
             docs = asyncio.run(collect_async(adapter.fetch_documents(config=config)))
 
@@ -909,94 +909,102 @@ class TestDetectExtension:
     """Unit tests for the _detect_extension instance method on WebPageSourceAdapter."""
 
     def test_pdf_content_type_returns_pdf_extension(self):
-        """application/pdf Content-Type must produce .pdf."""
+        """application/pdf Content-Type must produce ('.pdf', 'application/pdf')."""
         adapter = WebPageSourceAdapter()
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.headers = {"Content-Type": "application/pdf"}
 
         with patch.object(adapter._rest_client, "call_rest", return_value=mock_response):
-            result = adapter._detect_extension(url="https://example.com/doc.pdf", timeout=10)
+            extension, content_type = adapter._detect_extension(url="https://example.com/doc.pdf", timeout=10)
 
-        assert result == ".pdf"
+        assert extension == ".pdf"
+        assert content_type == "application/pdf"
 
     def test_text_html_content_type_returns_html_extension(self):
-        """text/html Content-Type must produce .html."""
+        """text/html Content-Type must produce ('.html', 'text/html')."""
         adapter = WebPageSourceAdapter()
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.headers = {"Content-Type": "text/html; charset=utf-8"}
 
         with patch.object(adapter._rest_client, "call_rest", return_value=mock_response):
-            result = adapter._detect_extension(url="https://example.com/page", timeout=10)
+            extension, content_type = adapter._detect_extension(url="https://example.com/page", timeout=10)
 
-        assert result == ".html"
+        assert extension == ".html"
+        assert content_type == "text/html"
 
     def test_text_plain_content_type_returns_txt_extension(self):
-        """text/plain Content-Type must produce .txt."""
+        """text/plain Content-Type must produce ('.txt', 'text/plain')."""
         adapter = WebPageSourceAdapter()
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.headers = {"Content-Type": "text/plain"}
 
         with patch.object(adapter._rest_client, "call_rest", return_value=mock_response):
-            result = adapter._detect_extension(url="https://example.com/notes.txt", timeout=10)
+            extension, content_type = adapter._detect_extension(url="https://example.com/notes.txt", timeout=10)
 
-        assert result == ".txt"
+        assert extension == ".txt"
+        assert content_type == "text/plain"
 
     def test_unknown_content_type_falls_back_to_html(self):
-        """An unrecognised Content-Type must fall back to .html."""
+        """An unrecognised Content-Type must fall back to ('.html', 'text/html')."""
         adapter = WebPageSourceAdapter()
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.headers = {"Content-Type": "application/octet-stream"}
 
         with patch.object(adapter._rest_client, "call_rest", return_value=mock_response):
-            result = adapter._detect_extension(url="https://example.com/binary", timeout=10)
+            extension, content_type = adapter._detect_extension(url="https://example.com/binary", timeout=10)
 
-        assert result == ".html"
+        assert extension == ".html"
+        assert content_type == "text/html"
 
     def test_missing_content_type_header_falls_back_to_html(self):
-        """Absent Content-Type header must fall back to .html."""
+        """Absent Content-Type header must fall back to ('.html', 'text/html')."""
         adapter = WebPageSourceAdapter()
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.headers = {}
 
         with patch.object(adapter._rest_client, "call_rest", return_value=mock_response):
-            result = adapter._detect_extension(url="https://example.com/page", timeout=10)
+            extension, content_type = adapter._detect_extension(url="https://example.com/page", timeout=10)
 
-        assert result == ".html"
+        assert extension == ".html"
+        assert content_type == "text/html"
 
     def test_405_method_not_allowed_falls_back_to_html(self):
-        """A 405 response must silently fall back to .html without reading Content-Type."""
+        """A 405 response must silently fall back to ('.html', 'text/html') without reading Content-Type."""
         adapter = WebPageSourceAdapter()
         mock_response = Mock()
         mock_response.status_code = 405
         mock_response.headers = {}
 
         with patch.object(adapter._rest_client, "call_rest", return_value=mock_response):
-            result = adapter._detect_extension(url="https://example.com/page", timeout=10)
+            extension, content_type = adapter._detect_extension(url="https://example.com/page", timeout=10)
 
-        assert result == ".html"
+        assert extension == ".html"
+        assert content_type == "text/html"
 
     def test_connection_error_falls_back_to_html(self):
-        """A network-level error during HEAD must silently fall back to .html."""
+        """A network-level error during HEAD must silently fall back to ('.html', 'text/html')."""
         adapter = WebPageSourceAdapter()
 
         with patch.object(adapter._rest_client, "call_rest", side_effect=ExternalServiceError("refused")):
-            result = adapter._detect_extension(url="https://example.com/page", timeout=10)
+            extension, content_type = adapter._detect_extension(url="https://example.com/page", timeout=10)
 
-        assert result == ".html"
+        assert extension == ".html"
+        assert content_type == "text/html"
 
     def test_timeout_falls_back_to_html(self):
-        """A timeout during HEAD must silently fall back to .html."""
+        """A timeout during HEAD must silently fall back to ('.html', 'text/html')."""
         adapter = WebPageSourceAdapter()
 
         with patch.object(adapter._rest_client, "call_rest", side_effect=ExternalServiceError("timed out")):
-            result = adapter._detect_extension(url="https://example.com/page", timeout=5)
+            extension, content_type = adapter._detect_extension(url="https://example.com/page", timeout=5)
 
-        assert result == ".html"
+        assert extension == ".html"
+        assert content_type == "text/html"
 
     def test_content_type_with_charset_param_is_parsed_correctly(self):
         """Content-Type with a charset param must still map to the correct extension
@@ -1007,9 +1015,10 @@ class TestDetectExtension:
         mock_response.headers = {"Content-Type": "application/pdf; name=doc.pdf"}
 
         with patch.object(adapter._rest_client, "call_rest", return_value=mock_response):
-            result = adapter._detect_extension(url="https://example.com/doc.pdf", timeout=10)
+            extension, content_type = adapter._detect_extension(url="https://example.com/doc.pdf", timeout=10)
 
-        assert result == ".pdf"
+        assert extension == ".pdf"
+        assert content_type == "application/pdf"
 
 
 class TestWebPageFetchDocumentsEdgeCases:
@@ -1028,7 +1037,7 @@ class TestWebPageFetchDocumentsEdgeCases:
                 f"{_ADAPTER_MODULE}.RecursiveUrlLoader",
                 return_value=mock_loader,
             ) as mock_loader_class,
-            patch.object(adapter, "_detect_extension", return_value=".html"),
+            patch.object(adapter, "_detect_extension", return_value=(".html", "text/html")),
         ):
             asyncio.run(collect_async(adapter.fetch_documents(config=config)))
 
@@ -1050,7 +1059,7 @@ class TestWebPageFetchDocumentsEdgeCases:
 
         with (
             patch(f"{_ADAPTER_MODULE}.RecursiveUrlLoader", return_value=mock_loader),
-            patch.object(adapter, "_detect_extension", return_value=".html"),
+            patch.object(adapter, "_detect_extension", return_value=(".html", "text/html")),
         ):
             docs = asyncio.run(collect_async(adapter.fetch_documents(config=config)))
 
