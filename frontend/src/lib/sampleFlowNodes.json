@@ -282,7 +282,6 @@
       "max_files": 100,
       "include_filter": null,
       "exclude_filter": null,
-      "force_ingest": false,
       "ignore_hidden_files": true
     }
   }

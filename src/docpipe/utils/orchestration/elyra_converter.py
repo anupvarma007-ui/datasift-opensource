@@ -431,7 +431,11 @@ class ElyraConverter:
             Configuration dictionary
         """
         config = node.get(ElyraConstants.PARAMETERS)
-        return deepcopy(config) if config else {}
+        if not config:
+            return {}
+        config = deepcopy(config)
+        config.pop(DocpipeConstants.FORCE_INGEST, None)
+        return config
 
     def _get_node_position(self, *, node: dict) -> tuple[int, int]:
         """

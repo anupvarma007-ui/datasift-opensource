@@ -482,6 +482,45 @@ class TestElyraConverter:
         assert extract_node["config"]["text_extraction"]["provider"] == "docling_library"
         assert extract_node["config"]["entity_extraction"]["provider"] == "litellm"
 
+    def test_force_ingest_stripped_from_ingest_node_config(self, *, converter):
+        """force_ingest in ingest node parameters must be stripped — it belongs in global_config only."""
+        pipeline = {
+            "id": "fi-test",
+            "pipelines": [
+                {
+                    "id": "pipeline-1",
+                    "nodes": [
+                        {
+                            "id": "node-1",
+                            "op": "ingest_source",
+                            "app_data": {"ui_data": {"label": "Ingest", "x": 0, "y": 0}},
+                            "parameters": {
+                                "provider": "filesystem",
+                                "connection_params": {"paths": ["./docs"]},
+                                "force_ingest": False,
+                            },
+                            "outputs": [{"id": "port-out"}],
+                            "inputs": [],
+                        }
+                    ],
+                    "app_data": {
+                        "ds_flow": {
+                            "name": "Test",
+                            "global_config": {"force_ingest": True},
+                        }
+                    },
+                }
+            ],
+            "primary_pipeline": "pipeline-1",
+        }
+        result = converter.transform_elyra_to_internal(elyra_json=pipeline, flow_id="fi-test")
+        dag = result["flow"]["dag"]
+        assert "force_ingest" not in dag[0]["config"], (
+            "force_ingest must be stripped from ingest operator config; it belongs in global_config only"
+        )
+        # Verify other params are preserved
+        assert dag[0]["config"]["provider"] == "filesystem"
+
     def test_topological_sort_order(self, *, converter):
         """Test that nodes are correctly sorted in topological order."""
         # Create pipeline with specific dependency order
