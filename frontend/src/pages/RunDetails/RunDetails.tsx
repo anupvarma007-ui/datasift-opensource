@@ -15,8 +15,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { InlineLoading, InlineNotification } from '@carbon/react';
 import type { PipelineFlowDef } from '@elyra/canvas';
 import { ReadOnlyCanvas } from '@/components/common/ReadOnlyCanvas/ReadOnlyCanvas';
-import { getFlow } from '@/services/api';
-import { getJobRun, cancelJobRun } from '@/services/api/actions/job-run-actions';
+import { getJobRun, cancelJobRun, getJobRunFlowDefinition } from '@/services/api/actions/job-run-actions';
 import { log4js, logUtil } from '@/utils/logger';
 import { useAppDispatch } from '@/hooks';
 import {
@@ -52,12 +51,14 @@ export function RunDetails(): React.JSX.Element {
 
     const bootstrap = async (): Promise<void> => {
       try {
-        // Fetch flow definition so ReadOnlyCanvas can render the pipeline graph
-        const flowRes = await getFlow(flowId);
+        // Fetch the flow definition as it was when this run was executed.
+        // This ensures the canvas shows exactly what ran, not the current
+        // (potentially modified) live definition.
+        const snapshotRes = await getJobRunFlowDefinition(runId);
         if (cancelled) { return; }
-        const definition = flowRes.data.definition as PipelineFlowDef | undefined;
+        const definition = snapshotRes.data as unknown as PipelineFlowDef | undefined;
         if (!definition) {
-          setLoadError('Flow definition not available.');
+          setLoadError('Flow definition not available for this run.');
           return;
         }
         setPipelineFlow(definition);

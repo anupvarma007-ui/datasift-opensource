@@ -119,6 +119,13 @@ export interface JobRunStatusResponse {
   node_sequence: string[];
   job_stats: JobStats;
   node_metadata: NodeMetadataItem[];
+  /**
+   * Frozen copy of the flow definition as it existed when this run was triggered.
+   * Use this to render the historical flow graph — never use the live flow definition
+   * from GET /flows/{flow_id}, which may have changed since the run executed.
+   * Null for older runs or CLI-only runs where no snapshot was captured.
+   */
+  flow_snapshot: Record<string, unknown> | null;
   [key: string]: unknown;
 }
 
