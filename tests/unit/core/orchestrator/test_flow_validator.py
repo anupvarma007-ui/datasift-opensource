@@ -1537,5 +1537,104 @@ class TestFlowValidatorFeatureMetadataToDictIsPrimary:
         assert output["content"]["is_primary"] is False
 
 
+class TestValidationActionTypeMapping:
+    """Verify action_type is derived at the API boundary (ValidationAlertDTO) from message_code.
+
+    Core validation models (ValidationMessage, ValidationAlert) carry no action_type.
+    The mapping lives entirely in flow_dto.py and is applied by the model_validator
+    on ValidationAlertDTO.
+    """
+
+    def test_highlight_for_structural_wiring_errors(self):
+        """Structural/wiring message codes map to 'highlight'."""
+        from docpipe.api.dto.flow_dto import ValidationActionType, ValidationAlertDTO
+
+        for code in [
+            "DISJOINT_OPERATORS_DETECTED",
+            "OPERATOR_NAME_REPEATED",
+            "INGEST_OPERATOR_MISPLACED",
+            "GENERATE_OUTPUT_MISSING",
+            "CHUNKER_OPERATOR_MISPLACED",
+            "CHUNKER_OPERATOR_MISSING",
+            "MISSING_FEATURES",
+            "CYCLIC_DEPENDENCY_DETECTED",
+        ]:
+            dto = ValidationAlertDTO(message="test", message_code=code)
+            assert dto.action_type == ValidationActionType.HIGHLIGHT, f"Expected highlight for {code}"
+
+    def test_open_properties_for_config_errors(self):
+        """Config/property message codes map to 'open_properties'."""
+        from docpipe.api.dto.flow_dto import ValidationActionType, ValidationAlertDTO
+
+        for code in [
+            "CHUNKER_INVALID_CHUNK_TYPE",
+            "CHUNKER_INVALID_CHUNK_SIZE_TYPE",
+            "CHUNKER_INVALID_CHUNK_OVERLAP_TYPE",
+            "CHUNK_OVERLAP_EXCEEDS_THRESHOLD",
+            "MERGE_TYPE_NOT_PROVIDED",
+            "INVALID_MERGE_TYPE",
+            "SQL_FILTER_INVALID_COLUMN",
+            "ACL_INVALID_PROVIDER",
+            "OPERATOR_VALIDATION_FAILED",
+        ]:
+            dto = ValidationAlertDTO(message="test", message_code=code)
+            assert dto.action_type == ValidationActionType.OPEN_PROPERTIES, f"Expected open_properties for {code}"
+
+    def test_none_for_flow_level_errors(self):
+        """Flow-level structural errors (no navigable node) map to 'none'."""
+        from docpipe.api.dto.flow_dto import ValidationActionType, ValidationAlertDTO
+
+        for code in [
+            "PIPELINE_NOT_FOUND_ERROR",
+            "DAG_PIPELINE_MISSING",
+            "INVALID_FLOW_WRAPPER",
+            "MISSING_NODE_ID",
+            "MISSING_NODE_NAME",
+            "MISSING_OPERATOR_NAME",
+        ]:
+            dto = ValidationAlertDTO(message="test", message_code=code)
+            assert dto.action_type == ValidationActionType.NONE, f"Expected none for {code}"
+
+    def test_unknown_code_defaults_to_none(self):
+        """Unknown or future message codes default to 'none' rather than erroring."""
+        from docpipe.api.dto.flow_dto import ValidationActionType, ValidationAlertDTO
+
+        dto = ValidationAlertDTO(message="test", message_code="SOME_FUTURE_CODE")
+        assert dto.action_type == ValidationActionType.NONE
+
+    def test_none_message_code_defaults_to_none(self):
+        """Missing message_code defaults to 'none'."""
+        from docpipe.api.dto.flow_dto import ValidationActionType, ValidationAlertDTO
+
+        dto = ValidationAlertDTO(message="test", message_code=None)
+        assert dto.action_type == ValidationActionType.NONE
+
+    def test_core_validation_alert_has_no_action_type(self):
+        """ValidationAlert (core model) carries no action_type field."""
+        from docpipe.exceptions.docpipe_exceptions import ValidationAlert
+
+        alert = ValidationAlert(
+            code="flow_validation_failed",
+            message="Disconnected operator",
+            message_code="DISJOINT_OPERATORS_DETECTED",
+        )
+        assert "action_type" not in alert
+        assert not hasattr(alert, "action_type")
+
+    def test_core_validation_message_has_no_action_type(self):
+        """ValidationMessage (core model) carries no action_type field."""
+        from docpipe.exceptions.error_messages import ValidationMessage
+
+        msg = ValidationMessage.create(message="Invalid chunk type", message_code="CHUNKER_INVALID_CHUNK_TYPE")
+        assert not hasattr(msg, "action_type") or msg.model_fields.get("action_type") is None
+
+    def test_dto_action_type_always_set_regardless_of_input(self):
+        """action_type is always present on ValidationAlertDTO — never None."""
+        from docpipe.api.dto.flow_dto import ValidationAlertDTO
+
+        dto = ValidationAlertDTO(message="some error", message_code="DISJOINT_OPERATORS_DETECTED")
+        assert dto.action_type is not None
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
