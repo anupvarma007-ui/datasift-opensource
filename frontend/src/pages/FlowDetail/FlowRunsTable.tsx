@@ -42,10 +42,14 @@ export interface RunRow {
   run_id: string;
   /** Formatted start time string (locale date + time), e.g. `"8/5/2026, 6:26:05 AM"`. */
   start_time: string;
+  /** Raw start time epoch in seconds/milliseconds for accurate sorting. */
+  start_time_epoch?: number;
   /** UI status category derived from the API status string. */
   status: RunStatus;
   /** Formatted elapsed duration string, e.g. `"00:02:34"`. */
   duration: string;
+  /** Raw duration in seconds for accurate sorting. */
+  duration_seconds?: number;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -68,9 +72,9 @@ export const STATUS_LABELS: Record<RunStatus, string> = {
 };
 
 const TABLE_HEADERS = [
-  { key: 'start_time', header: 'Start time' },
+  { key: 'start_time', header: 'Start time', isSortable: true },
   { key: 'status',     header: 'Status'     },
-  { key: 'duration',   header: 'Duration'   },
+  { key: 'duration',   header: 'Duration',   isSortable: true },
   { key: 'actions',    header: ''           },
 ];
 
@@ -133,16 +137,25 @@ export function FlowRunsTable({
 
   const rowMap = useMemo(() => new Map(runs.map((r) => [r.run_id, r])), [runs]);
 
-  const filteredRows = useMemo(() => runs
-    .filter((r) => statusFilter === 'all' || r.status === statusFilter)
-    .map((r) => ({
-      id: r.run_id,
-      start_time: r.start_time,
-      // status rendered via StatusIcon + label in renderCell — kept as a plain
-      // string here so SharedDataTable's built-in search can still match it.
-      status: STATUS_LABELS[r.status],
-      duration: r.duration,
-    })), [runs, statusFilter]);
+  const filteredRows = useMemo(() => {
+    // Default sort: Start time descending (most recent run first)
+    const sorted = [...runs].sort((a, b) => {
+      const timeA = a.start_time_epoch ?? 0;
+      const timeB = b.start_time_epoch ?? 0;
+      return timeB - timeA;
+    });
+
+    return sorted
+      .filter((r) => statusFilter === 'all' || r.status === statusFilter)
+      .map((r) => ({
+        id: r.run_id,
+        start_time: r.start_time,
+        // status rendered via StatusIcon + label in renderCell — kept as a plain
+        // string here so SharedDataTable's built-in search can still match it.
+        status: STATUS_LABELS[r.status],
+        duration: r.duration,
+      }));
+  }, [runs, statusFilter]);
 
   return (
     <div className={styles.tableWrapper}>
@@ -167,6 +180,21 @@ export function FlowRunsTable({
         searchPlaceholder="Search by start time"
         loading={isLoading}
         size="lg"
+        sortRow={(_cellA, _cellB, { key, sortDirection, rowIds: [idA, idB] }) => {
+          const rowA = rowMap.get(idA);
+          const rowB = rowMap.get(idB);
+          if (!rowA || !rowB) { return 0; }
+          let valA = 0;
+          let valB = 0;
+          if (key === 'start_time') {
+            valA = rowA.start_time_epoch ?? 0;
+            valB = rowB.start_time_epoch ?? 0;
+          } else if (key === 'duration') {
+            valA = rowA.duration_seconds ?? 0;
+            valB = rowB.duration_seconds ?? 0;
+          }
+          return sortDirection === 'ASC' ? valA - valB : valB - valA;
+        }}
         renderToolbarActions={() => (
           <Button
             kind="ghost"

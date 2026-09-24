@@ -153,8 +153,12 @@ export interface ProjectRow {
   tags: string[];
   /** Display string for the last-modified date (e.g. `"06/04/23"`). */
   lastModified: string;
+  /** ISO date string or raw timestamp for last-modified date sorting. */
+  lastModifiedRaw?: string;
   /** Display string for the created-on date (e.g. `"04/05/26"`). */
   createdOn: string;
+  /** ISO date string or raw timestamp for created-on date sorting. */
+  createdOnRaw?: string;
 }
 
 // ── Flow UI types ────────────────────────────────────────────────────────────

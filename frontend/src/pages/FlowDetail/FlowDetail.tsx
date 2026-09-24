@@ -157,10 +157,12 @@ export function FlowDetail(): React.JSX.Element | null {
     getJobRuns({ job_id: jobId })
       .then((res) => {
         const rows: RunRow[] = res.data.list.map((item) => ({
-          run_id:     item.job_run_id,
-          start_time: formatEpochToDisplay(item.start_time),
-          status:     toRunStatus(item.status),
-          duration:   formatElapsedTime(item.duration),
+          run_id:           item.job_run_id,
+          start_time:       formatEpochToDisplay(item.start_time),
+          start_time_epoch: item.start_time,
+          status:           toRunStatus(item.status),
+          duration:         formatElapsedTime(item.duration),
+          duration_seconds: item.duration,
         }));
         setRuns(rows);
       })

@@ -78,8 +78,8 @@ const TABLE_HEADERS = [
   { key: 'name',         header: 'Name'          },
   { key: 'flows',        header: 'Flows'         },
   { key: 'tags',         header: 'Tag'           },
-  { key: 'lastModified', header: 'Last modified' },
-  { key: 'createdOn',    header: 'Created on'    },
+  { key: 'lastModified', header: 'Last modified', isSortable: true },
+  { key: 'createdOn',    header: 'Created on',    isSortable: true },
   { key: 'actions',      header: ''              },
 ];
 
@@ -158,6 +158,16 @@ export function ProjectsTable({
         paginated={false}
         loading={isLoading}
         size="lg"
+        sortRow={(_cellA, _cellB, { key, sortDirection, rowIds: [idA, idB] }) => {
+          const rowA = rowMap.get(idA);
+          const rowB = rowMap.get(idB);
+          if (!rowA || !rowB) { return 0; }
+          const dateStrA = key === 'lastModified' ? (rowA.lastModifiedRaw ?? rowA.lastModified) : (rowA.createdOnRaw ?? rowA.createdOn);
+          const dateStrB = key === 'lastModified' ? (rowB.lastModifiedRaw ?? rowB.lastModified) : (rowB.createdOnRaw ?? rowB.createdOn);
+          const timeA = new Date(dateStrA).getTime();
+          const timeB = new Date(dateStrB).getTime();
+          return sortDirection === 'ASC' ? timeA - timeB : timeB - timeA;
+        }}
         renderToolbarActions={() => (
           <>
             <Button

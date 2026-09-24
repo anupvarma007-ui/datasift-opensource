@@ -101,8 +101,8 @@ const TABLE_HEADERS = [
   { key: 'run_count',   header: 'Runs'         },
   { key: 'run_status',  header: 'Needs review'  },
   { key: 'tags',        header: 'Tags'          },
-  { key: 'modified_on', header: 'Last modified' },
-  { key: 'created_on',  header: 'Created on'    },
+  { key: 'modified_on', header: 'Last modified', isSortable: true },
+  { key: 'created_on',  header: 'Created on',    isSortable: true },
   { key: 'actions',     header: ''              },
 ];
 
@@ -196,6 +196,14 @@ export function FlowsTable({
         paginated={false}
         loading={isLoading}
         size="lg"
+        sortRow={(_cellA, _cellB, { key, sortDirection, rowIds: [idA, idB] }) => {
+          const rowA = rowMap.get(idA);
+          const rowB = rowMap.get(idB);
+          if (!rowA || !rowB) { return 0; }
+          const timeA = key === 'modified_on' ? new Date(rowA.modified_on).getTime() : new Date(rowA.created_on).getTime();
+          const timeB = key === 'modified_on' ? new Date(rowB.modified_on).getTime() : new Date(rowB.created_on).getTime();
+          return sortDirection === 'ASC' ? timeA - timeB : timeB - timeA;
+        }}
         renderToolbarLeft={renderToolbarLeft}
         renderToolbarActions={renderToolbarActions}
         renderCell={(cell, row) => {

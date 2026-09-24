@@ -27,6 +27,8 @@ export interface SharedDataTableHeader {
   key: string;
   /** Column heading content (string or React node). */
   header: React.ReactNode;
+  /** Whether this column header is sortable. */
+  isSortable?: boolean;
 }
 
 /** A single data row passed to {@link SharedDataTable}. Must include a unique `id`. */
@@ -104,6 +106,21 @@ interface SharedDataTableProps {
    * Defaults to `false` to preserve existing layout for all other callers.
    */
   horizontalScroll?: boolean;
+  /** Whether sorting is enabled for the entire table or individual columns. */
+  isSortable?: boolean;
+  /** Custom comparator callback passed to Carbon DataTable `sortRow`. */
+  sortRow?: (
+    cellA: unknown,
+    cellB: unknown,
+    params: {
+      key: string;
+      sortDirection: 'ASC' | 'DESC' | 'NONE';
+      sortStates: { ASC: 'ASC'; DESC: 'DESC'; NONE: 'NONE' };
+      locale: string;
+      compare: (a: unknown, b: unknown, locale?: string) => number;
+      rowIds: [string, string];
+    }
+  ) => number;
 }
 
 /** Conditionally wraps children in a scroll div. Renders children bare when `active` is false. */
@@ -145,6 +162,8 @@ export function SharedDataTable({
   renderToolbarActions,
   searchKeys,
   horizontalScroll = false,
+  isSortable,
+  sortRow,
 }: SharedDataTableProps): React.JSX.Element {
   const normalizedInitialPageSize = pageSizes.includes(initialPageSize)
     ? initialPageSize
@@ -178,12 +197,6 @@ export function SharedDataTable({
     });
   }, [rows, searchValue, searchable, searchKeys]);
 
-  const paginatedRows = useMemo(() => {
-    if (!paginated) { return filteredRows; }
-    const startIndex = (page - 1) * pageSize;
-    return filteredRows.slice(startIndex, startIndex + pageSize);
-  }, [page, pageSize, filteredRows, paginated]);
-
   // Build a lookup from row id → original row for renderCell access
   const rowById = useMemo(() => {
     const map: Record<string, SharedDataTableRow> = {};
@@ -207,33 +220,28 @@ export function SharedDataTable({
 
   return (
     /* eslint-disable react/jsx-props-no-spreading */
-    <DataTable rows={paginatedRows} headers={headers}>
+    <DataTable
+      rows={filteredRows}
+      headers={headers}
+      isSortable={isSortable}
+      sortRow={sortRow}
+    >
       {({
         rows: tableRows,
         headers: tableHeaders,
         getTableProps,
         getHeaderProps,
         getRowProps,
-      }) => (
-        <TableContainer title={title} description={description}>
-          {(searchable || renderToolbarLeft) && (
-            <TableToolbar>
-              {renderToolbarLeft?.()}
-              <TableToolbarContent>
-                {searchable && (
-                  <TableToolbarSearch
-                    placeholder={searchPlaceholder}
-                    onChange={(_e, value) => { setSearchValue(value ?? ''); }}
-                    persistent
-                  />
-                )}
-                {renderToolbarActions?.()}
-              </TableToolbarContent>
-            </TableToolbar>
-          )}
-          {filteredRows.length === 0 && searchValue ? (
-            // Search produced zero results — keep the toolbar mounted so the user
-            // can clear the query, show a centred NotFoundEmptyState below it.
+      }) => {
+        const visibleRows = paginated
+          ? tableRows.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize)
+          : tableRows;
+
+        let tableContent: React.ReactNode;
+        if (filteredRows.length === 0 && searchValue) {
+          // Search produced zero results — keep the toolbar mounted so the user
+          // can clear the query, show a centred NotFoundEmptyState below it.
+          tableContent = (
             <div className={styles.emptyStateWrapper}>
               <NotFoundEmptyState
                 title="No results found"
@@ -241,24 +249,32 @@ export function SharedDataTable({
                 size="sm"
               />
             </div>
-          ) : filteredRows.length === 0 && emptyState ? (
-            // No data at all — show the caller-supplied empty state, centred.
-            <div className={styles.emptyStateWrapper}>{emptyState}</div>
-          ) : (
+          );
+        } else if (filteredRows.length === 0 && emptyState) {
+          // No data at all — show the caller-supplied empty state, centred.
+          tableContent = <div className={styles.emptyStateWrapper}>{emptyState}</div>;
+        } else {
+          tableContent = (
             <>
               <MaybeScrollWrapper active={horizontalScroll} className={styles.tableScrollX}>
                 <Table {...getTableProps()} size={size} className={horizontalScroll ? styles.scrollableTable : undefined}>
                   <TableHead>
                     <TableRow>
                       {tableHeaders.map((header) => (
-                        <TableHeader {...getHeaderProps({ header })} key={header.key}>
+                        <TableHeader
+                          {...getHeaderProps({
+                            header,
+                            isSortable: header.isSortable ?? isSortable,
+                          })}
+                          key={header.key}
+                        >
                           {header.header}
                         </TableHeader>
                       ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {tableRows.map((row) => {
+                    {visibleRows.map((row) => {
                       const originalRow = rowById[row.id] ?? { id: row.id };
                       return (
                         <React.Fragment key={row.id}>
@@ -294,9 +310,30 @@ export function SharedDataTable({
                 />
               )}
             </>
-          )}
-        </TableContainer>
-      )}
+          );
+        }
+
+        return (
+          <TableContainer title={title} description={description}>
+            {(searchable || renderToolbarLeft) && (
+              <TableToolbar>
+                {renderToolbarLeft?.()}
+                <TableToolbarContent>
+                  {searchable && (
+                    <TableToolbarSearch
+                      placeholder={searchPlaceholder}
+                      onChange={(_e, value) => { setSearchValue(value ?? ''); }}
+                      persistent
+                    />
+                  )}
+                  {renderToolbarActions?.()}
+                </TableToolbarContent>
+              </TableToolbar>
+            )}
+            {tableContent}
+          </TableContainer>
+        );
+      }}
     </DataTable>
     /* eslint-enable react/jsx-props-no-spreading */
   );

@@ -33,7 +33,9 @@ function toProjectRow(p: Project): ProjectRow {
     flows: p.flowCount,
     tags: p.tags,
     lastModified: new Date(p.modifiedOn).toLocaleDateString(),
+    lastModifiedRaw: p.modifiedOn,
     createdOn: new Date(p.createdOn).toLocaleDateString(),
+    createdOnRaw: p.createdOn,
   };
 }
 
