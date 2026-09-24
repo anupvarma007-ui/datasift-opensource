@@ -2,7 +2,7 @@
  * Flow Run Properties Tearsheet Component
  *
  * A tearsheet component for configuring flow execution properties including
- * incremental processing, validation, node output preview, and storage options.
+ * incremental processing, validation, and storage options.
  * Uses the SharedTearsheet component for consistent modal behavior.
  * Connected to Redux store for state persistence.
  */
@@ -34,7 +34,6 @@ interface FlowRunPropertiesTearsheetProps {
  * Provides a user interface for configuring:
  * - Incremental processing with nested option for retaining deleted document records
  * - Flow validation toggle
- * - Node output preview toggle
  * - Intermediate data storage selection (Container file system or Memory)
  *
  * @param props - Component props
@@ -47,7 +46,7 @@ export function FlowRunPropertiesTearsheet({
 }: FlowRunPropertiesTearsheetProps): React.JSX.Element {
   const dispatch = useAppDispatch();
   const reduxProperties = useAppSelector((state) => state.flow.flowRunProperties);
-  
+
   // Local state for editing (syncs to Redux on save)
   const [localProperties, setLocalProperties] = useState<FlowRunProperties>(reduxProperties);
 
@@ -61,12 +60,12 @@ export function FlowRunPropertiesTearsheet({
   const handleSave = () => {
     // Save to Redux store
     dispatch(setFlowRunProperties(localProperties));
-    
+
     // Call optional callback
     if (onSave) {
       onSave(localProperties);
     }
-    
+
     onClose();
   };
 
@@ -139,21 +138,6 @@ export function FlowRunPropertiesTearsheet({
               toggled={localProperties.validateFlow}
               onToggle={(checked) => {
                 updateLocalProperty(FLOW_PROPERTY_KEYS.VALIDATE_FLOW as keyof FlowRunProperties, checked);
-              }}
-            />
-          </div>
-        </div>
-
-        <div className={styles.propertySection}>
-          <div className={styles.toggleWrapper}>
-            <Toggle
-              id="node-output-preview"
-              labelText={FLOW_RUN_PROPERTIES_LABELS.toggles.nodeOutputPreview}
-              labelA={FLOW_RUN_PROPERTIES_LABELS.toggleLabels.off}
-              labelB={FLOW_RUN_PROPERTIES_LABELS.toggleLabels.on}
-              toggled={localProperties.enableNodeOutputPreview}
-              onToggle={(checked) => {
-                updateLocalProperty(FLOW_PROPERTY_KEYS.ENABLE_NODE_OUTPUT_PREVIEW as keyof FlowRunProperties, checked);
               }}
             />
           </div>

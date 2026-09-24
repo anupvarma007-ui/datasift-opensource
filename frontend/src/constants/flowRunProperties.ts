@@ -14,7 +14,6 @@ export const FLOW_PROPERTY_KEYS = {
   ENABLE_INCREMENTAL_PROCESSING: 'enableIncrementalProcessing',
   RETAIN_RECORDS_FOR_DELETED_DOCUMENTS: 'retainRecordsForDeletedDocuments',
   VALIDATE_FLOW: 'validateFlow',
-  ENABLE_NODE_OUTPUT_PREVIEW: 'enableNodeOutputPreview',
   INTERMEDIATE_DATA_STORAGE: 'intermediateDataStorage',
 } as const;
 
@@ -37,7 +36,6 @@ export const FLOW_RUN_PROPERTIES_LABELS = {
     incrementalProcessing: 'Enable incremental processing',
     retainRecords: 'Retain records for deleted documents',
     validateFlow: 'Validate flow',
-    nodeOutputPreview: 'Enable node output preview for the flow',
   },
   dropdown: {
     intermediateStorage: 'Intermediate data storage',
