@@ -14,9 +14,9 @@ import { cancelJobRun } from '@/services/api/actions/job-run-actions';
 import * as flowMapper from '@/services/api/mappers/flow-mapper';
 import * as projectMapper from '@/services/api/mappers/project-mapper';
 import { API_STATUS_MAP } from '@/constants/flowStatus';
-import { setFlow, updateFlow, setLoading, setError } from '@/slices/flowSlice';
+import { setFlow, updateFlow, setLoading, setError, setCurrentFlow } from '@/slices/flowSlice';
 import { setProject } from '@/slices/projectsSlice';
-import { makeSelectFlow, makeSelectProject } from '@/selectors';
+import { makeSelectFlow, makeSelectProject, selectCurrentFlow } from '@/selectors';
 import { useAppDispatch, useAppSelector, useNotify, useTheme } from '@/hooks';
 import { useRecentlyVisited } from '@/hooks/useRecentlyVisited';
 import { ROUTES, generateRoute } from '@/config';
@@ -69,6 +69,9 @@ export function FlowDetail(): React.JSX.Element | null {
 
   // ── Flow row from store ──────────────────────────────────────────────────
   const flowRow = useAppSelector(makeSelectFlow(flowId));
+  // Used to keep currentFlow in sync when the user edits flow details here
+  // so that Canvas reflects the new name without a re-fetch.
+  const currentFlow = useAppSelector(selectCurrentFlow);
 
   // ── Project name for the side panel display label ────────────────────────
   // projectId comes from the ?project_id= query param; resolve the human-readable
@@ -243,6 +246,11 @@ export function FlowDetail(): React.JSX.Element | null {
   ): Promise<void> => {
     await patchFlow(id, flowMapper.toPatchRequest(updates));
     dispatch(updateFlow({ flowId: id, updates: { name: updates.name, description: updates.description, tags: updates.tags } }));
+    // Also keep currentFlow in sync so the Canvas page reflects the new name
+    // without requiring a re-fetch when the user navigates there next.
+    if (currentFlow?.flow_id === id) {
+      dispatch(setCurrentFlow({ ...currentFlow, name: updates.name, description: updates.description, tags: updates.tags }));
+    }
     setEditOpen(false);
   };
 

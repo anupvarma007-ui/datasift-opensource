@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-explicit-any */
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
@@ -56,7 +56,7 @@ import { fetchNodeFeatures } from '@/utils/fetchNodeFeatures';
 import type { FlowValidationResponse } from '@/services/api';
 import { getOperatorMetadata as selectOperatorMetadata } from '@/slices/operatorsSlice';
 import { useBreadcrumbActions } from '@/contexts';
-import { fetchFlow, saveFlow, clearFlow, setFlowRunProperties, setCurrentFlow } from '@/slices/flowSlice';
+import { fetchFlow, saveFlow, clearFlow, setFlowRunProperties, setCurrentFlow, updateFlow } from '@/slices/flowSlice';
 import { patchFlow } from '@/services/api';
 import { useAppSelector, useNotify } from '@/hooks';
 import { selectCurrentFlow, selectFlowError, selectFlowRunProperties } from '@/selectors';
@@ -1615,7 +1615,9 @@ export function Canvas(): React.JSX.Element {
                 if (!currentFlow.flow_id) { return Promise.resolve(); }
                 return patchFlow(currentFlow.flow_id, updates)
                   .then((res) => {
+                    const flowId = currentFlow.flow_id!;
                     dispatch(setCurrentFlow({ ...currentFlow, ...res.data }));
+                    dispatch(updateFlow({ flowId, updates: { name: updates.name, description: updates.description, tags: updates.tags } }));
                     setIsEditOpen(false);
                   })
                   .catch(() => {
