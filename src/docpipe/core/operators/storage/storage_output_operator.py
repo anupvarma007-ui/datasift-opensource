@@ -284,6 +284,7 @@ class StorageOutputOperator(AbstractOperator):
                             OperatorConstants.Config.DESCRIPTION: (
                                 "Provider-specific credentials (API keys, secrets, paths to credential files)."
                             ),
+                            OperatorConstants.Config.DEFAULT: {},
                             OperatorConstants.Config.REQUIRED: False,
                             OperatorConstants.Misc.TYPE: AttributeDataTypes.JSON,
                             OperatorConstants.Config.SENSITIVE: True,
@@ -404,8 +405,8 @@ class StorageOutputOperator(AbstractOperator):
         adapter = DestinationAdapterFactory.create(provider)
         try:
             dest_cfg = adapter.build_config_from_operator_params(
-                provider_config=self.destination_config.get("provider_config", {}),
-                credentials=self.destination_config.get("credentials", {}),
+                provider_config=self.destination_config.get("provider_config") or {},
+                credentials=self.destination_config.get("credentials") or {},
             )
         except (ValueError, KeyError) as e:
             config_error_msg = str(e)

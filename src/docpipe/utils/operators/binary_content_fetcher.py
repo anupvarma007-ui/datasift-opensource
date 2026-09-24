@@ -185,8 +185,8 @@ def _fetch_from_cloud_source(
     from docpipe.core.operators.operator_utils import resolve_env_var
 
     provider = ingest_source.get(OperatorConstants.Config.PROVIDER)
-    connection_params = ingest_source.get(OperatorConstants.Config.CONNECTION_PARAMS, {})
-    credentials = ingest_source.get(OperatorConstants.Config.CREDENTIALS, {})
+    connection_params = ingest_source.get(OperatorConstants.Config.CONNECTION_PARAMS) or {}
+    credentials = ingest_source.get(OperatorConstants.Config.CREDENTIALS) or {}
 
     if not provider:
         logger.error("Missing '%s' in ingest_source configuration", OperatorConstants.Config.PROVIDER)

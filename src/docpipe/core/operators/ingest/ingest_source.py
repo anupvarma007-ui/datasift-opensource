@@ -352,8 +352,8 @@ class IngestSourceOperator(AbstractOperator):
         """
         super().__init__(config)
         self.provider: str = config.get(PROVIDER_KEY, "").lower()
-        self.connection_params: dict[str, Any] = config.get(CONNECTION_PARAMS_KEY, {})
-        self.credentials: dict[str, Any] = config.get(CREDENTIALS_KEY, {})
+        self.connection_params: dict[str, Any] = config.get(CONNECTION_PARAMS_KEY) or {}
+        self.credentials: dict[str, Any] = config.get(CREDENTIALS_KEY) or {}
         self.max_files: int = config.get(MAX_FILES_KEY, MAX_FILES_DEFAULT_VALUE)
 
         # Get supported extensions
@@ -1047,6 +1047,7 @@ class IngestSourceOperator(AbstractOperator):
                         "Authentication credentials for the provider. Optional — credential fields "
                         "can be passed directly inside connection_params instead."
                     ),
+                    OperatorConstants.Config.DEFAULT: {},
                     OperatorConstants.Config.REQUIRED: False,
                     OperatorConstants.Misc.TYPE: AttributeDataTypes.JSON,
                     OperatorConstants.Config.SENSITIVE: True,

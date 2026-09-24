@@ -345,15 +345,19 @@ class OneDriveSourceAdapter(DocumentSourcePort):
             bytes | None: Binary content of the OneDrive file, or None if not found or error occurred
         """
         try:
-            # Extract required parameters and resolve environment variables
+            credentials = credentials or {}
+            connection_params = connection_params or {}
+            # Extract required parameters and resolve environment variables.
+            # Fall back to connection_params so callers that store credentials
+            # there (instead of the dedicated credentials block) work too.
             # IMPORTANT: Prioritize drive_id from credentials (document metadata) over connection_params
             # This is crucial for SharePoint URLs where the resolved drive_id may differ from config
             drive_id = resolve_env_var(credentials.get("drive_id")) or resolve_env_var(
                 connection_params.get("drive_id")
             )
-            client_id = resolve_env_var(credentials.get("client_id"))
-            client_secret = resolve_env_var(credentials.get("client_secret"))
-            tenant_id = resolve_env_var(credentials.get("tenant_id"))
+            client_id = resolve_env_var(credentials.get("client_id") or connection_params.get("client_id"))
+            client_secret = resolve_env_var(credentials.get("client_secret") or connection_params.get("client_secret"))
+            tenant_id = resolve_env_var(credentials.get("tenant_id") or connection_params.get("tenant_id"))
 
             if not all([drive_id, client_id, client_secret, tenant_id]):
                 logger.error("Missing required parameters for OneDrive binary content fetch")
