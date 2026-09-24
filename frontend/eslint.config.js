@@ -5,6 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from '@typescript-eslint/eslint-plugin'
 import tsparser from '@typescript-eslint/parser'
 import react from 'eslint-plugin-react'
+import formatjs from 'eslint-plugin-formatjs'
 
 export default [
   {
@@ -69,6 +70,7 @@ export default [
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
       '@typescript-eslint': tseslint,
+      formatjs,
     },
     rules: {
       ...js.configs.recommended.rules,
@@ -192,6 +194,11 @@ export default [
       'no-tabs': 'error',
       'quotes': ['error', 'single', { avoidEscape: true }],
       'semi': ['error', 'always'],
+
+      // Message descriptors
+      'formatjs/enforce-default-message': 'error',
+      'formatjs/enforce-placeholders': 'error',
+      'formatjs/no-camel-case': 'warn',
 
       // Disabled
       '@typescript-eslint/ban-ts-comment': 'off',

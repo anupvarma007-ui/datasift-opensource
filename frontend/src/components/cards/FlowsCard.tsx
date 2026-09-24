@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useIntl } from 'react-intl';
 import { Button } from '@carbon/react';
 import { Renew } from '@carbon/icons-react';
 import { ROUTES, generateRoute } from '@/config';
@@ -12,6 +13,7 @@ import { selectFlowsArray, selectFlowLoading, selectFlowError } from '@/selector
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
 import { HomeCard } from '../HomeCard';
 import cardStyles from '../HomeCard/HomeCard.module.scss';
+import { messages } from './FlowsCard.messages';
 
 const MAX_ROWS = 5;
 
@@ -28,6 +30,7 @@ const MAX_ROWS = 5;
 export function FlowsCard(): React.JSX.Element {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const intl = useIntl();
 
   const flows = useAppSelector(selectFlowsArray);
   const loading = useAppSelector(selectFlowLoading);
@@ -46,7 +49,7 @@ export function FlowsCard(): React.JSX.Element {
         dispatch(setFlows(map));
       })
       .catch(() => {
-        dispatch(setError('Failed to load flows.'));
+        dispatch(setError(intl.formatMessage(messages.loadError)));
       })
       .finally(() => {
         dispatch(setLoading(false));
@@ -74,7 +77,7 @@ export function FlowsCard(): React.JSX.Element {
   let cardChildren: React.ReactNode = null;
 
   if (loading) {
-    cardChildren = <p className={cardStyles.itemLoading}>Loading flows...</p>;
+    cardChildren = <p className={cardStyles.itemLoading}>{intl.formatMessage(messages.loading)}</p>;
   } else if (error) {
     cardChildren = <p className={cardStyles.itemError}>{error}</p>;
   } else if (rows.length > 0) {
@@ -106,12 +109,12 @@ export function FlowsCard(): React.JSX.Element {
 
   return (
     <HomeCard
-      title="Flows"
+      title={intl.formatMessage(messages.title)}
       headerIcon={Renew}
-      headerIconDescription="Refresh flows"
+      headerIconDescription={intl.formatMessage(messages.refreshDescription)}
       onHeaderAction={fetchFlows}
-      emptyTitle="No recent flows"
-      emptySubtitle="Recent flows will be listed here."
+      emptyTitle={intl.formatMessage(messages.emptyTitle)}
+      emptySubtitle={intl.formatMessage(messages.emptySubtitle)}
     >
       {cardChildren}
     </HomeCard>

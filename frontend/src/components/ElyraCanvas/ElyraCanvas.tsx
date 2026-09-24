@@ -1,5 +1,4 @@
 import React, { useRef, useEffect, useMemo } from 'react';
-import { IntlProvider } from 'react-intl';
 import { CommonCanvas, CanvasController } from '@elyra/canvas';
 import type {
   PipelineFlowDef,
@@ -163,24 +162,22 @@ export function ElyraCanvas({
   }
 
   return (
-    <IntlProvider locale="en">
-      <div className={styles.canvasContainer} ref={canvasRef}>
-        <CommonCanvas
-          canvasController={canvasController}
-          config={mergedConfig}
-          toolbarConfig={toolbarConfig}
-          contextMenuHandler={contextMenuHandler}
-          editActionHandler={editActionHandler}
-          clickActionHandler={clickActionHandler}
-          decorationActionHandler={decorationActionHandler}
-          rightFlyoutContent={rightFlyoutContent}
-          showRightFlyout={showRightFlyout}
-          bottomPanelContent={bottomPanelContent}
-          showBottomPanel={showBottomPanel}
-          topPanelContent={topPanelContent}
-          showTopPanel={showTopPanel}
-        />
-      </div>
-    </IntlProvider>
+    <div className={styles.canvasContainer} ref={canvasRef}>
+      <CommonCanvas
+        canvasController={canvasController}
+        config={mergedConfig}
+        toolbarConfig={toolbarConfig}
+        contextMenuHandler={contextMenuHandler}
+        editActionHandler={editActionHandler}
+        clickActionHandler={clickActionHandler}
+        decorationActionHandler={decorationActionHandler}
+        rightFlyoutContent={rightFlyoutContent}
+        showRightFlyout={showRightFlyout}
+        bottomPanelContent={bottomPanelContent}
+        showBottomPanel={showBottomPanel}
+        topPanelContent={topPanelContent}
+        showTopPanel={showTopPanel}
+      />
+    </div>
   );
 }
