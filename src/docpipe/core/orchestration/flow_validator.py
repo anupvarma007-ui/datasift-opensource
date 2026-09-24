@@ -1369,11 +1369,11 @@ class FlowValidator:
         return extract_operator_count
 
     def validate_last_operator(self, *, dag: list, validate_results: ValidateStepResults):
-        """Validate that every terminal node in the DAG is a VectorDB operator.
+        """Validate that every terminal node in the DAG is a VectorDB or Storage operator.
 
         A terminal node is any node with no outgoing edges. In a branching flow there
         can be more than one terminal node, so each branch end is checked independently.
-        A warning is emitted for every terminal node that is not a VectorDB operator.
+        A warning is emitted for every terminal node that is not a VectorDB or Storage operator.
         """
         if not dag:
             return
@@ -1387,7 +1387,7 @@ class FlowValidator:
                 continue
             terminal_node = dag[index]
             category = self._get_operator_category(op_def=terminal_node, alerts=validate_results.errors)
-            if category != OperatorCategory.VectorDB:
+            if category not in (OperatorCategory.VectorDB, OperatorCategory.Storage):
                 add_validation_alert(
                     message=ValidationMessage(
                         message=ValidationCodeMessages.GENERATE_OUTPUT_MISSING.value,

@@ -121,13 +121,21 @@ export function DocumentClassifierPanelBody({
         ? providerConfigDefault
         : '') ?? '';
 
-  // document_types stored as a comma-separated string; parse to derive the multi-select selection
-  const documentTypesRaw = (controller?.getPropertyValue?.({ name: ATTR.DOCUMENT_TYPES }) as string | undefined)
-    ?? (nodeAttributes[ATTR.DOCUMENT_TYPES]?.default as string | undefined)
-    ?? '';
+  // document_types stored as a string array
+  const documentTypesRaw = controller?.getPropertyValue?.({ name: ATTR.DOCUMENT_TYPES })
+    ?? nodeAttributes[ATTR.DOCUMENT_TYPES]?.default
+    ?? [];
 
   const selectedDocumentTypes: string[] = useMemo(
-    () => (documentTypesRaw ? documentTypesRaw.split(',').map((s: string) => s.trim()).filter(Boolean) : []),
+    () => {
+      if (Array.isArray(documentTypesRaw)) {
+        return documentTypesRaw.map(String);
+      }
+      if (typeof documentTypesRaw === 'string' && documentTypesRaw.trim()) {
+        return documentTypesRaw.split(',').map((s) => s.trim()).filter(Boolean);
+      }
+      return [];
+    },
     [documentTypesRaw]
   );
 
@@ -274,10 +282,11 @@ export function DocumentClassifierPanelBody({
               labelText={LABEL.DOCUMENT_TYPES}
               hideLabel
               placeholder="invoice, contract, report, email"
-              value={documentTypesRaw}
+              value={Array.isArray(documentTypesRaw) ? documentTypesRaw.join(', ') : (typeof documentTypesRaw === 'string' ? documentTypesRaw : '')}
               rows={2}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                controller?.updatePropertyValue?.({ name: ATTR.DOCUMENT_TYPES }, e.target.value);
+                const types = e.target.value.split(',').map((s) => s.trim()).filter(Boolean);
+                controller?.updatePropertyValue?.({ name: ATTR.DOCUMENT_TYPES }, types);
               }}
             />
           </>
@@ -293,7 +302,7 @@ export function DocumentClassifierPanelBody({
             itemToString={(item: DocumentClassItem | null) => item?.document_type ?? ''}
             initialSelectedItems={initialSelectedItems}
             onChange={({ selectedItems }: { selectedItems: DocumentClassItem[] }) => {
-              const value = selectedItems.map((item) => item.document_type).join(', ');
+              const value = selectedItems.map((item) => item.document_type);
               controller?.updatePropertyValue?.({ name: ATTR.DOCUMENT_TYPES }, value);
             }}
             invalid={documentTypesValidation.isInvalid}

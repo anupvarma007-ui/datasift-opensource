@@ -805,6 +805,7 @@ class DocumentClassifierOperator(AbstractOperator):  # type: ignore[misc]
                     OperatorConstants.Misc.NAME: "Document Types",
                     OperatorConstants.Config.DESCRIPTION: "List of document types or dictionary with descriptions",
                     OperatorConstants.Config.REQUIRED: False,
+                    OperatorConstants.Config.DEFAULT: [],
                     OperatorConstants.Misc.TYPE: AttributeDataTypes.LIST,
                 },
                 OperatorConstants.Config.CONFIDENCE_THRESHOLD: {

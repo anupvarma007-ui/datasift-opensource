@@ -617,8 +617,8 @@ class TestFlowValidatorIntegration:
             "Expected MISSING_FEATURES error not found"
         )
 
-    def test_last_operator_not_vectordb_warns(self, validator, fixtures_invoices_dir):
-        """Test that flow where last operator is not VectorDB generates warning."""
+    def test_last_operator_not_vectordb_or_storage_warns(self, validator, fixtures_invoices_dir):
+        """Test that flow where last operator is not VectorDB or Storage generates warning."""
         flow_def = {
             "dag": [
                 {
@@ -656,13 +656,53 @@ class TestFlowValidatorIntegration:
             ValidationCodeMessages.GENERATE_OUTPUT_MISSING.name in str(warning.message_code) for warning in warnings
         ), "Expected GENERATE_OUTPUT_MISSING warning not found"
 
-    def test_last_operator_not_vectordb_warns_for_each_branch(self, validator, fixtures_invoices_dir):
-        """Test that a warning is emitted for every branch terminal that is not VectorDB.
+    def test_last_operator_storage_does_not_warn(self, validator, fixtures_invoices_dir):
+        """Test that flow where last operator is Storage (e.g. document_set) does not warn."""
+        flow_def = {
+            "dag": [
+                {
+                    "id": "ingest-1",
+                    "name": "ingest_documents",
+                    "operator": "ingest_source",
+                    "config": {"paths": str(fixtures_invoices_dir)},
+                    "input_edges": [],
+                    "output_edges": [{"node_id_ref": "extract-1"}],
+                },
+                {
+                    "id": "extract-1",
+                    "name": "extract_documents",
+                    "operator": "extract_operator",
+                    "config": {"doc_column": "content"},
+                    "input_edges": [{"node_id_ref": "ingest-1"}],
+                    "output_edges": [{"node_id_ref": "docset-1"}],
+                },
+                {
+                    "id": "docset-1",
+                    "name": "save_document_set",
+                    "operator": "document_set",
+                    "config": {"name": "test_set"},
+                    "input_edges": [{"node_id_ref": "extract-1"}],
+                    "output_edges": [],
+                },
+            ]
+        }
+
+        # Should validate without raising FlowValidationException or with no GENERATE_OUTPUT_MISSING warning
+        try:
+            validator.validate_dag(flow_def=flow_def, global_config={})
+        except FlowValidationException as exc_info:
+            warnings = exc_info.warnings or []
+            assert not any(
+                ValidationCodeMessages.GENERATE_OUTPUT_MISSING.name in str(warning.message_code) for warning in warnings
+            )
+
+    def test_last_operator_not_vectordb_or_storage_warns_for_each_branch(self, validator, fixtures_invoices_dir):
+        """Test that a warning is emitted for every branch terminal that is not VectorDB or Storage.
 
         Flow shape:
             ingest-1 → extract-1 → branching-1 → chunker-a (branch A terminal)
                                                → chunker-b (branch B terminal)
-        Both branch terminals miss VectorDB, so two GENERATE_OUTPUT_MISSING warnings
+        Both branch terminals miss VectorDB/Storage, so two GENERATE_OUTPUT_MISSING warnings
         are expected — one per terminal node.
         """
         flow_def = {
