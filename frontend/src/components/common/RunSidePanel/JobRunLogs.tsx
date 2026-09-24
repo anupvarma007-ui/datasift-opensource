@@ -107,6 +107,10 @@ export function JobRunLogs({
           const logText = (executionLogs as Record<string, unknown>)[nodeId];
           const fullLog = logText ? String(logText) : '';
           const nodeName = nodeNameMap[nodeId] ?? nodeId;
+          const isTruncated = fullLog.length > LOG_PREVIEW_THRESHOLD;
+          const displayedLog = isTruncated
+            ? `${fullLog.slice(0, LOG_PREVIEW_THRESHOLD)}...`
+            : fullLog;
 
           return (
             <div
@@ -119,13 +123,13 @@ export function JobRunLogs({
               >
                 <div className={styles.logContent}>
                   <div className={styles.logRow}>
-                    <div className={styles.displayedLogContent}>{fullLog}</div>
+                    <div className={styles.displayedLogContent}>{displayedLog}</div>
                     <CopyButton
                       onClick={() => { void navigator.clipboard.writeText(fullLog).catch(() => {}); }}
                       autoAlign
                     />
                   </div>
-                  {fullLog.length > LOG_PREVIEW_THRESHOLD && (
+                  {isTruncated && (
                     <div className={styles.showMoreLink}>
                       <button
                         type="button"
