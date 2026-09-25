@@ -6,7 +6,7 @@ import {
   ErrorFilled,
   Misuse,
 } from '@carbon/icons-react';
-import styles from './FlowDetail.module.scss';
+import styles from './FlowMetrics.module.scss';
 
 /**
  * Pre-computed run count totals passed from {@link FlowDetail} to {@link FlowMetrics}.

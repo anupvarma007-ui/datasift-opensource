@@ -14,16 +14,15 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { InlineLoading, InlineNotification } from '@carbon/react';
 import type { PipelineFlowDef } from '@elyra/canvas';
-import { ReadOnlyCanvas } from '@/components/common/ReadOnlyCanvas/ReadOnlyCanvas';
+import { ReadOnlyCanvas } from '@/components';
 import { getJobRun, cancelJobRun, getJobRunFlowDefinition } from '@/services/api/actions/job-run-actions';
 import { log4js, logUtil } from '@/utils/logger';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useJobRunPoller } from '@/hooks';
 import {
   setCurrentRun,
   setRunning,
   setExecutionLogs,
 } from '@/slices/jobRunSlice';
-import { useJobRunPoller } from '@/pages/Canvas/useJobRunPoller';
 import { generateRoute } from '@/config';
 import styles from './RunDetails.module.scss';
 

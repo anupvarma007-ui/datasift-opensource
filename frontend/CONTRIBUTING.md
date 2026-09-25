@@ -78,6 +78,28 @@ frontend/
 └── package.json             # Dependencies and scripts
 ```
 
+### Component Organization Rules
+
+To ensure a clear separation between routing views and UI components:
+
+1. **`pages/` (Route Containers Only)**:
+   - Contains only top-level route components (`Canvas.tsx`, `Projects.tsx`, `Home.tsx`), their SCSS modules, and page-scoped hooks.
+   - Does not hold component subtrees.
+
+2. **`components/<PageOrFeatureName>/` (Domain & Feature Components)**:
+   - UI components grouped by the feature or page domain that owns them.
+   - Addressable from anywhere via the `@/components/<FeatureName>` path alias.
+   - Examples:
+     - `components/Canvas/` (`FlowRunHistoryTearsheet`, `FlowRunPropertiesTearsheet`, `NodeSuggestion`, `NotificationPanel`)
+     - `components/ProjectDetail/` (`FlowsTable`, `CreateFlowTearsheet`)
+     - `components/Projects/` (`ProjectsTable`)
+     - `components/Home/` (`SampleProjectModal`)
+     - `components/PropertiesPanel/`, `components/ElyraCanvas/`, `components/ReadOnlyCanvas/`
+
+3. **`components/common/` (Shared Primitives)**:
+   - Reusable primitives consumed across 2+ independent, unrelated feature/domain contexts.
+   - Examples: `DeleteModal`, `SharedDataTable`, `RequiredParamTooltip`, `TagInput`, `VaultInput`, `ToastContainer`, `CreateProjectTearsheet`.
+
 ### File Organization Rules
 
 1. **One component per file** - Each component should have its own file

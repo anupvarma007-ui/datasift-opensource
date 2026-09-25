@@ -2,9 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Button } from '@carbon/react';
 import { Download } from '@carbon/icons-react';
 import { useNavigate } from 'react-router-dom';
-import { SharedDataTable } from '../SharedDataTable';
-import { SharedTearsheet } from '../SharedTearsheet';
-import { StatusIcon, STATUS_LABELS } from '@/pages/FlowDetail/FlowRunsTable';
+import { SharedDataTable, SharedTearsheet } from '@/components/common';
 import {
   FLOW_RUN_HISTORY_HEADERS,
   FLOW_RUN_HISTORY_TITLE,
@@ -15,7 +13,8 @@ import { getJobRuns } from '@/services/api';
 import { getJobRun } from '@/services/api/actions/job-run-actions';
 import { generateRoute } from '@/config';
 import type { JobRunListItem } from '@/types';
-import type { RunStatus } from '@/pages/FlowDetail/FlowRunsTable';
+import { StatusIcon, STATUS_LABELS } from '@/components/FlowDetail';
+import type { RunStatus } from '@/components/FlowDetail';
 import { getJobRunStatusLabel } from '@/constants/jobRunStatus';
 import { formatEpochToDisplay, formatElapsedTime } from '@/utils/dateTimeUtils';
 import styles from './FlowRunHistoryTearsheet.module.scss';

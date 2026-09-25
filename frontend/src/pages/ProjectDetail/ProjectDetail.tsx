@@ -5,7 +5,7 @@ import { Tag } from '@carbon/react';
 import { Add, ChevronUp, ChevronDown } from '@carbon/icons-react';
 import { NoDataEmptyState } from '@carbon/ibm-products';
 import { PageLayout } from '@/components';
-import { CreateFlowTearsheet, FlowsTable } from '@/components/common';
+import { CreateFlowTearsheet, FlowsTable } from '@/components/ProjectDetail';
 import { buildFlowDefinition } from '@/lib/helpers';
 import { createFlow, patchFlow, deleteFlow, getProject, getFlowsByProjectId } from '@/services/api';
 import * as projectMapper from '@/services/api/mappers/project-mapper';

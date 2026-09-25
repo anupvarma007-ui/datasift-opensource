@@ -23,10 +23,8 @@ import { ROUTES, generateRoute } from '@/config';
 import { useBreadcrumbActions } from '@/contexts';
 import { formatEpochToDisplay, formatElapsedTime } from '@/utils/dateTimeUtils';
 import { FlowInfoPanel } from '@/components/common/FlowInfoPanel';
-import { FlowMetrics } from './FlowMetrics';
-import type { RunMetrics } from './FlowMetrics';
-import { FlowRunsTable } from './FlowRunsTable';
-import type { RunRow } from './FlowRunsTable';
+import { FlowMetrics, FlowRunsTable } from '@/components/FlowDetail';
+import type { RunMetrics, RunRow } from '@/components/FlowDetail';
 import styles from './FlowDetail.module.scss';
 
 // ─── Local helpers ─────────────────────────────────────────────────────────────

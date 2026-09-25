@@ -11,7 +11,7 @@ import { Toggle, Dropdown } from '@carbon/react';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setFlowRunProperties } from '@/slices/flowSlice';
 import type { FlowRunProperties } from '@/types';
-import { SharedTearsheet } from '../SharedTearsheet';
+import { SharedTearsheet } from '@/components/common';
 import {
   STORAGE_OPTIONS,
   FLOW_RUN_PROPERTIES_LABELS,

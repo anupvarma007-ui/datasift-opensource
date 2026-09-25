@@ -2,9 +2,7 @@ import React, { useMemo, useState } from 'react';
 import type { ProjectRow } from '@/types';
 import { Button, OverflowMenu, OverflowMenuItem, Tag } from '@carbon/react';
 import { Add, Renew } from '@carbon/icons-react';
-import { SharedDataTable } from '../SharedDataTable';
-import { EditDetailsModal } from '../EditDetailsModal';
-import { DeleteModal } from '../DeleteModal';
+import { SharedDataTable, EditDetailsModal, DeleteModal } from '@/components/common';
 import styles from './ProjectsTable.module.scss';
 
 /**

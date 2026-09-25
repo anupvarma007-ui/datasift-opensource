@@ -5,7 +5,7 @@ import { Add, Renew } from '@carbon/icons-react';
 import { NoDataEmptyState, ErrorEmptyState } from '@carbon/ibm-products';
 import { PageLayout } from '@/components';
 import { CreateProjectTearsheet } from '@/components/common/CreateProjectTearsheet';
-import { ProjectsTable } from '@/components/common/ProjectsTable';
+import { ProjectsTable } from '@/components/Projects';
 import type { CreateProjectFormValues, Project, ProjectRow } from '@/types';
 import { useAppDispatch, useAppSelector, useTheme } from '@/hooks';
 import { generateRoute } from '@/config';

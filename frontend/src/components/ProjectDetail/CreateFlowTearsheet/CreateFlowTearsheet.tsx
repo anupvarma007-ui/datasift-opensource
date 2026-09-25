@@ -10,7 +10,7 @@ import {
   TextArea,
 } from '@carbon/react';
 import type { CreateFlowFormValues } from '@/types';
-import { TagInput } from '../TagInput';
+import { TagInput } from '@/components/common';
 import styles from './CreateFlowTearsheet.module.scss';
 
 export type { CreateFlowFormValues };

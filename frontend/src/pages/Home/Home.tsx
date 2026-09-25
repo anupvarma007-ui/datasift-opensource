@@ -21,7 +21,7 @@ import { selectProjectsArray } from '@/selectors/projectsSelectors';
 import { selectFlowsArray } from '@/selectors/flowSelectors';
 import { PageLayout, ProjectsCard, RunsCard, FlowsCard } from '@/components';
 import { TileContent } from '@/components/TileContent';
-import { SampleProjectModal } from '@/components/common/SampleProjectModal';
+import { SampleProjectModal } from '@/components/Home';
 import styles from './Home.module.scss';
 
 const ARIA_LABELS: AriaLabels = {

@@ -14,9 +14,7 @@ import {
   InProgress,
 } from '@carbon/icons-react';
 import type { FlowRow, FlowRunStatus } from '@/types';
-import { SharedDataTable } from '../SharedDataTable';
-import { EditDetailsModal } from '../EditDetailsModal';
-import { DeleteModal } from '../DeleteModal';
+import { SharedDataTable, EditDetailsModal, DeleteModal } from '@/components/common';
 import styles from './FlowsTable.module.scss';
 
 interface FlowsTableProps {

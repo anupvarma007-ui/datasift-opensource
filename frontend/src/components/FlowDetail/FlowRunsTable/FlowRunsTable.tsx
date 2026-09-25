@@ -14,7 +14,7 @@ import {
   Misuse,
 } from '@carbon/icons-react';
 import { SharedDataTable } from '@/components/common/SharedDataTable';
-import styles from './FlowDetail.module.scss';
+import styles from './FlowRunsTable.module.scss';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

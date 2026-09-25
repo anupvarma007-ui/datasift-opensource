@@ -6,6 +6,7 @@ import tseslint from '@typescript-eslint/eslint-plugin'
 import tsparser from '@typescript-eslint/parser'
 import react from 'eslint-plugin-react'
 import formatjs from 'eslint-plugin-formatjs'
+import boundaries from 'eslint-plugin-boundaries'
 
 export default [
   {
@@ -64,6 +65,24 @@ export default [
       react: {
         version: '18.3',
       },
+      'boundaries/include': ['src/**/*'],
+      'boundaries/elements': [
+        {
+          type: 'pages',
+          pattern: 'src/pages/**/*',
+          partialMatch: false,
+        },
+        {
+          type: 'components-common',
+          pattern: 'src/components/common/**/*',
+          partialMatch: false,
+        },
+        {
+          type: 'components-domain',
+          pattern: 'src/components/!(common)/**/*',
+          partialMatch: false,
+        },
+      ],
     },
     plugins: {
       react,
@@ -71,6 +90,7 @@ export default [
       'react-refresh': reactRefresh,
       '@typescript-eslint': tseslint,
       formatjs,
+      boundaries,
     },
     rules: {
       ...js.configs.recommended.rules,
@@ -199,6 +219,28 @@ export default [
       'formatjs/enforce-default-message': 'error',
       'formatjs/enforce-placeholders': 'error',
       'formatjs/no-camel-case': 'warn',
+
+      // Architecture Boundaries
+      'boundaries/dependencies': ['error', {
+        default: 'allow',
+        policies: [
+          {
+            from: { element: { type: 'components-common' } },
+            disallow: [
+              { to: { element: { type: 'components-domain' } } },
+              { to: { element: { type: 'pages' } } },
+            ],
+            message: 'src/components/common cannot import domain components from src/components or page-routing components from src/pages.',
+          },
+          {
+            from: { element: { type: 'components-domain' } },
+            disallow: [
+              { to: { element: { type: 'pages' } } },
+            ],
+            message: 'src/components cannot import from page-routing components in src/pages.',
+          },
+        ],
+      }],
 
       // Disabled
       '@typescript-eslint/ban-ts-comment': 'off',

@@ -41,8 +41,7 @@ import {
   DEFAULT_NODE_STATUS,
   METADATA_TABLE_HEADERS,
 } from '@/constants/runSidePanel';
-import { SharedTearsheet } from '../SharedTearsheet';
-import { SharedDataTable } from '../SharedDataTable';
+import { SharedDataTable, SharedTearsheet } from '@/components/common';
 import styles from './NodeSummary.module.scss';
 
 // ─── Doc array item shape ─────────────────────────────────────────────────────

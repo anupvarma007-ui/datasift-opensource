@@ -37,14 +37,19 @@ import {
   ElyraCanvas,
   Loading,
   ErrorBoundary,
-  FlowRunHistoryTearsheet,
-  FlowRunPropertiesTearsheet,
   ReadOnlyCanvas,
 } from '@/components';
-import { EditDetailsModal, FlowInfoPanel, type FlowPanelData, NodeSuggestion } from '@/components/common';
+import { EditDetailsModal, FlowInfoPanel, type FlowPanelData } from '@/components/common';
+import {
+  FlowRunHistoryTearsheet,
+  FlowRunPropertiesTearsheet,
+  NodeSuggestion,
+  NotificationPanel,
+  type NotificationPanelState,
+  type NotificationItem,
+} from '@/components/Canvas';
 import CommonPropertiesPanelWrapper from '@/components/PropertiesPanel/CommonPropertiesPanelWrapper';
 import { getParameterDef } from '@/services/parameterDefs';
-import { useNodeSuggestion } from './useNodeSuggestion';
 import { CANVAS_ACTIONS, JOB_ASSET_REF_TYPE } from '@/constants/canvasActions';
 import { NodeOperator, BRANCHING_OUTPORT_ID, MERGING_INPORT_ID } from '@/constants/operators';
 import { applyAllLinkDecorations } from '@/utils/linkDecorations';
@@ -58,10 +63,8 @@ import { getOperatorMetadata as selectOperatorMetadata } from '@/slices/operator
 import { useBreadcrumbActions } from '@/contexts';
 import { fetchFlow, saveFlow, clearFlow, setFlowRunProperties, setCurrentFlow, updateFlow } from '@/slices/flowSlice';
 import { patchFlow } from '@/services/api';
-import { useAppSelector, useNotify } from '@/hooks';
+import { useAppSelector, useNotify, useNodeSuggestion, useJobRunPoller } from '@/hooks';
 import { selectCurrentFlow, selectFlowError, selectFlowRunProperties } from '@/selectors';
-import { NotificationPanel } from '@/components/common/NotificationPanel';
-import type { NotificationPanelState, NotificationItem } from '@/components/common/NotificationPanel';
 import { selectCurrentJobRunId, selectCurrentJobId, selectIsRunning } from '@/selectors/jobRunSelectors';
 import { createJobRun, cancelJobRun } from '@/services/api/actions/job-run-actions';
 import { setCurrentRun, setRunning, setExecutionLogs } from '@/slices/jobRunSlice';
@@ -69,7 +72,6 @@ import { LinkConditionTearsheet } from '@/components/ElyraCanvas/LinkConditionTe
 import type { LinkConditionValues } from '@/components/ElyraCanvas/LinkConditionTearsheet';
 import type { CriteriaJson } from '@/components/PropertiesPanel/CustomPanels/AnnotationFilter/conditionTypes';
 import type { FeatureAttributes } from '@/types';
-import { useJobRunPoller } from './useJobRunPoller';
 import styles from './Canvas.module.scss';
 
 const logger = log4js.getLogger('Canvas');
