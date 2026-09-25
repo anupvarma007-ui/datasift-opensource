@@ -174,6 +174,11 @@ export function NotificationPanel({
     return () => {
       globalThis.removeEventListener('showBottomPanel', handleShow);
       globalThis.removeEventListener('hideBottomPanel', handleHide);
+      // Reset module-level store on unmount
+      panelState.isOpen = false;
+      panelState.showTopBar = false;
+      panelState.topBarDismissed = false;
+      panelState.notifications = [];
     };
   }, []);
 
