@@ -72,7 +72,7 @@
           ],
           "app_data": {
             "ui_data": {
-              "label": "Extract Text",
+              "label": "Extract Content",
               "description": "Extract text and entities from documents using Docling"
             }
           }

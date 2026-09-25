@@ -26,7 +26,9 @@ import {
   EMBEDDINGS_LABELS as LABEL,
   EMBEDDINGS_PROVIDERS,
   EMBEDDINGS_PROVIDER_LABELS,
+  WATSONX_CONTAINER_KINDS,
   type EmbeddingsProvider,
+  type WatsonxContainerKind,
 } from './constants';
 import type { ModelInfo, OperatorFeature, OperatorMetadata } from '@/types';
 import { NodeOperator } from '@/constants/operators';
@@ -91,6 +93,18 @@ export function EmbeddingsPanelBody({ controller }: EmbeddingsPanelBodyProps): R
     : '';
   const apiKey: string = typeof providerConfigObject.api_key === 'string' // pragma: allowlist secret
     ? providerConfigObject.api_key
+    : '';
+
+  const watsonxProperties = providerSchemas['watsonx']?.properties ?? {};
+  const watsonxUrl: string = typeof providerConfigObject[ATTR.PROVIDER_CONFIG_URL] === 'string'
+    ? (providerConfigObject[ATTR.PROVIDER_CONFIG_URL] as string)
+    : '';
+  const watsonxContainerKind: WatsonxContainerKind =
+    (providerConfigObject[ATTR.PROVIDER_CONFIG_CONTAINER_KIND] as WatsonxContainerKind | undefined)
+    ?? (watsonxProperties[ATTR.PROVIDER_CONFIG_CONTAINER_KIND]?.default as WatsonxContainerKind | undefined)
+    ?? 'project';
+  const watsonxContainerId: string = typeof providerConfigObject[ATTR.PROVIDER_CONFIG_CONTAINER_ID] === 'string'
+    ? (providerConfigObject[ATTR.PROVIDER_CONFIG_CONTAINER_ID] as string)
     : '';
 
   const overlapRatio: number =
@@ -164,13 +178,7 @@ export function EmbeddingsPanelBody({ controller }: EmbeddingsPanelBodyProps): R
   /**
    * Update a single field inside the persisted `provider_config` object.
    */
-  const updateProviderConfig = useCallback((
-    key:
-      | typeof ATTR.PROVIDER_CONFIG_MODEL_ID
-      | typeof ATTR.PROVIDER_CONFIG_API_BASE
-      | typeof ATTR.PROVIDER_CONFIG_API_KEY,
-    value: string
-  ): void => {
+  const updateProviderConfig = useCallback((key: string, value: unknown): void => {
     update(ATTR.PROVIDER_CONFIG, {
       ...providerConfigObject,
       [key]: value,
@@ -321,6 +329,82 @@ export function EmbeddingsPanelBody({ controller }: EmbeddingsPanelBodyProps): R
             />
           )}
         </div>
+
+        {/* Watsonx-specific fields — url, container_kind, container_id.
+            Only rendered when the watsonx provider is selected. */}
+        {provider === 'watsonx' && (
+          <>
+            <div className={common.formField}>
+              <div className={common.labelWithTooltip}>
+                <DefinitionTooltip
+                  definition={watsonxProperties[ATTR.PROVIDER_CONFIG_URL]?.description ?? ''}
+                  openOnHover
+                  align="right"
+                >
+                  {LABEL.URL}
+                </DefinitionTooltip>
+              </div>
+              <TextInput
+                id="embeddings-watsonx-url"
+                labelText={LABEL.URL}
+                hideLabel
+                placeholder="https://us-south.ml.cloud.ibm.com"
+                value={watsonxUrl}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  updateProviderConfig(ATTR.PROVIDER_CONFIG_URL, e.target.value);
+                }}
+              />
+            </div>
+
+            <div className={common.formField}>
+              <div className={common.labelWithTooltip}>
+                <DefinitionTooltip
+                  definition={watsonxProperties[ATTR.PROVIDER_CONFIG_CONTAINER_KIND]?.description ?? ''}
+                  openOnHover
+                  align="right"
+                >
+                  {LABEL.CONTAINER_KIND}
+                </DefinitionTooltip>
+              </div>
+              <Dropdown
+                id="embeddings-watsonx-container-kind"
+                titleText={LABEL.CONTAINER_KIND}
+                hideLabel
+                label="Select container type"
+                items={[...WATSONX_CONTAINER_KINDS]}
+                selectedItem={watsonxContainerKind}
+                itemToString={(item: WatsonxContainerKind | null) => item ?? ''}
+                onChange={({ selectedItem }: { selectedItem: WatsonxContainerKind | null }) => {
+                  if (selectedItem) {
+                    updateProviderConfig(ATTR.PROVIDER_CONFIG_CONTAINER_KIND, selectedItem);
+                  }
+                }}
+              />
+            </div>
+
+            <div className={common.formField}>
+              <div className={common.labelWithTooltip}>
+                <DefinitionTooltip
+                  definition={watsonxProperties[ATTR.PROVIDER_CONFIG_CONTAINER_ID]?.description ?? ''}
+                  openOnHover
+                  align="right"
+                >
+                  {LABEL.CONTAINER_ID}
+                </DefinitionTooltip>
+              </div>
+              <TextInput
+                id="embeddings-watsonx-container-id"
+                labelText={LABEL.CONTAINER_ID}
+                hideLabel
+                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                value={watsonxContainerId}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  updateProviderConfig(ATTR.PROVIDER_CONFIG_CONTAINER_ID, e.target.value);
+                }}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <Accordion align="start">

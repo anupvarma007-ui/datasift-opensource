@@ -246,7 +246,7 @@ export function CommonPropertiesPanel({
           <TabPanel>
             <div className={styles.tabContent}>
               {ConfigureComponent ? (
-                <ConfigureComponent controller={controller} />
+                <ConfigureComponent key={currentNodeId} controller={controller} />
               ) : (
                 <p className={styles.configurationLabel}>
                   Configuration parameters will be displayed here

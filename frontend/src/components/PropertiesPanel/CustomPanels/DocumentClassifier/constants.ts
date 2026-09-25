@@ -49,3 +49,11 @@ export const DOCUMENT_CLASSIFIER_LABELS = {
   INCLUDE_REASONING: 'Include reasoning',
   DOC_COLUMN: 'Document content column',
 } as const;
+
+/** Description shown at the top of the Provider configuration accordion item. */
+export const PROVIDER_CONFIG_DESCRIPTION = 'Select the LLM provider used for classification and configure its connection settings.';
+
+/** Description shown at the top of the Classification configuration accordion item. */
+export const CLASSIFICATION_CONFIG_DESCRIPTION =
+  'Define the document types the model can classify into and set the minimum confidence '
+  + 'score required to accept a result.';

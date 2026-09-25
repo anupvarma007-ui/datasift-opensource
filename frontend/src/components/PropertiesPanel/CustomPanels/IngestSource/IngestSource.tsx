@@ -29,7 +29,7 @@ import {
   PROVIDER_DISPLAY_LABELS,
   SUPPORTED_FILE_EXTENSIONS,
 } from './constants';
-import { ProviderFieldsForm } from './ProviderFieldsForm';
+import { ProviderFieldsForm } from '../shared/ProviderFieldsForm';
 import { JsonTextArea } from '@/components/common/JsonTextArea/JsonTextArea';
 import common from '../../CommonPropertiesPanel.module.scss';
 import { getRequiredParamValidator } from '@/utils/requiredParamValidation';

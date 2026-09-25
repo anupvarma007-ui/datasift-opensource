@@ -29,11 +29,14 @@
  * 3. `controller.updatePropertyValue({ name }, value)` — writes on change
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { getRequiredParamValidator } from '@/utils/requiredParamValidation';
 import { RequiredParamTooltip } from '@/components/common';
 import { JsonTextArea } from '@/components/common/JsonTextArea/JsonTextArea';
+import { ProviderFieldsForm } from '../shared/ProviderFieldsForm';
 import {
+  Accordion,
+  AccordionItem,
   DefinitionTooltip,
   Dropdown,
   FilterableMultiSelect,
@@ -48,6 +51,7 @@ import {
   PII_AND_HAP_LABELS as LABEL,
   EXPECTED_REDACTIONS_OPTIONS,
   PII_LIST_OPTIONS,
+  PROVIDER_CONFIG_DESCRIPTION,
 } from './constants';
 import common from '../../CommonPropertiesPanel.module.scss';
 
@@ -60,6 +64,10 @@ export function PiiAndHapPanelBody({ controller }: PiiAndHapPanelBodyProps): Rea
   // ── Read operator attribute metadata from Redux (passed via Canvas.tsx) ──
   const operatorMetadata = (controller?.getAppData?.()?.operatorMetadata ?? {}) as Record<string, OperatorMetadata>;
   const nodeAttributes: Record<string, OperatorFeature> = operatorMetadata[NodeOperator.PII_AND_HAP]?.attributes ?? {};
+
+  // ── Provider-specific field schema from provider_config metadata ──
+  const providerConfigAttr = nodeAttributes[ATTR.PROVIDER_CONFIG];
+  const providerSchemas = providerConfigAttr?.providers ?? {};
 
   // ── Read current saved values, falling back to backend defaults ────────
 
@@ -145,6 +153,13 @@ export function PiiAndHapPanelBody({ controller }: PiiAndHapPanelBodyProps): Rea
     | Record<string, unknown>
     | null
     | undefined;
+
+  // ── Per-provider structured field state ──
+  const [providerFieldValues, setProviderFieldValues] = useState<Record<string, unknown>>(
+    (typeof providerConfigRaw === 'object' && providerConfigRaw !== null)
+      ? providerConfigRaw
+      : {}
+  );
 
   // Provider dropdown options sourced exclusively from operator metadata valid_values.
   // No hardcoded fallback — the Dropdown renders an empty list until metadata loads.
@@ -412,7 +427,7 @@ export function PiiAndHapPanelBody({ controller }: PiiAndHapPanelBodyProps): Rea
         </>
       )}
 
-      {/* ── Provider — always visible ─────────────────────────────────── */}
+      {/* ── Provider dropdown always visible ───────────────────────── */}
       <div className={common.formField}>
         <div className={common.labelWithTooltip}>
           <RequiredParamTooltip
@@ -433,6 +448,8 @@ export function PiiAndHapPanelBody({ controller }: PiiAndHapPanelBodyProps): Rea
           onChange={({ selectedItem }: { selectedItem: string | null }) => {
             if (selectedItem) {
               controller?.updatePropertyValue?.({ name: ATTR.PROVIDER }, selectedItem);
+              controller?.updatePropertyValue?.({ name: ATTR.PROVIDER_CONFIG }, null);
+              setProviderFieldValues({});
             }
           }}
           invalid={providerValidation.isInvalid}
@@ -440,33 +457,58 @@ export function PiiAndHapPanelBody({ controller }: PiiAndHapPanelBodyProps): Rea
         />
       </div>
 
-      {/* TODO: Provider config fields should be dynamic based on the selected provider.
-          Each provider (e.g. litellm, watsonx) has a different set of required
-          config keys. This field should render provider-specific inputs rather than a
-          generic JSON textarea once the per-provider config schema is available. */}
-      <div className={common.formField}>
-        <div className={common.labelWithTooltip}>
-          <RequiredParamTooltip
-            paramId={ATTR.PROVIDER_CONFIG}
-            nodeAttributes={nodeAttributes}
-            definition={nodeAttributes[ATTR.PROVIDER_CONFIG]?.description ?? 'Provider-specific configuration JSON.'}
-          >
-            {LABEL.PROVIDER_CONFIG}
-          </RequiredParamTooltip>
-        </div>
-        <JsonTextArea
-          id="provider_config"
-          labelText={LABEL.PROVIDER_CONFIG}
-          placeholder='{"model": "ollama/mistral", "api_base": "http://localhost:11434/v1"}'
-          storedValue={providerConfigRaw ?? null}
-          rows={3}
-          invalid={providerConfigValidation.isInvalid}
-          invalidText={providerConfigValidation.errorMessage}
-          onChange={(value) => {
-            controller?.updatePropertyValue?.({ name: ATTR.PROVIDER_CONFIG }, value);
-          }}
-        />
-      </div>
+      {/* ── Provider configuration accordion ─────────────────────────── */}
+      <Accordion align="start">
+        <AccordionItem title="Provider configuration">
+          <div className={common.accordionContent}>
+
+            <p className={common.accordionDescription}>{PROVIDER_CONFIG_DESCRIPTION}</p>
+
+            {provider && (
+              <div className={common.subSection}>
+                {providerSchemas[provider]?.properties && (
+                  <ProviderFieldsForm
+                    properties={providerSchemas[provider].properties}
+                    values={providerFieldValues}
+                    onChange={(fieldKey, value) => {
+                      const updated = { ...providerFieldValues, [fieldKey]: value };
+                      setProviderFieldValues(updated);
+                      controller?.updatePropertyValue?.({ name: ATTR.PROVIDER_CONFIG }, updated);
+                    }}
+                  />
+                )}
+
+                {!providerSchemas[provider]?.properties && (
+                  <div className={common.formField}>
+                    <div className={common.labelWithTooltip}>
+                      <RequiredParamTooltip
+                        paramId={ATTR.PROVIDER_CONFIG}
+                        nodeAttributes={nodeAttributes}
+                        definition={nodeAttributes[ATTR.PROVIDER_CONFIG]?.description ?? 'Provider-specific configuration JSON.'}
+                      >
+                        {LABEL.PROVIDER_CONFIG}
+                      </RequiredParamTooltip>
+                    </div>
+                    <JsonTextArea
+                      id="provider_config"
+                      labelText={LABEL.PROVIDER_CONFIG}
+                      placeholder='{"model": "ollama/mistral", "api_base": "http://localhost:11434/v1"}'
+                      storedValue={providerConfigRaw ?? null}
+                      rows={3}
+                      invalid={providerConfigValidation.isInvalid}
+                      invalidText={providerConfigValidation.errorMessage}
+                      onChange={(value) => {
+                        controller?.updatePropertyValue?.({ name: ATTR.PROVIDER_CONFIG }, value);
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+        </AccordionItem>
+      </Accordion>
 
     </div>
   );

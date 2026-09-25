@@ -59,6 +59,9 @@ export const PII_AND_HAP_LABELS = {
   PROVIDER_CONFIG: 'Provider configuration (JSON)',
 } as const;
 
+/** Description shown at the top of the Provider configuration accordion item. */
+export const PROVIDER_CONFIG_DESCRIPTION = 'Select the LLM provider used for detection and configure its connection settings.';
+
 /** All available redaction target options */
 export const EXPECTED_REDACTIONS_OPTIONS = ['PII', 'HAP'] as const;
 

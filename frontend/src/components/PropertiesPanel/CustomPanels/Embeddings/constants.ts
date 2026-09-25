@@ -15,6 +15,12 @@ export const EMBEDDINGS_ATTRIBUTE = {
   PROVIDER_CONFIG_API_BASE: 'api_base',
   /** Provider config key for the API credential */
   PROVIDER_CONFIG_API_KEY: 'api_key', // pragma: allowlist secret
+  /** Watsonx provider config key for the endpoint URL */
+  PROVIDER_CONFIG_URL: 'url',
+  /** Watsonx provider config key for the container type */
+  PROVIDER_CONFIG_CONTAINER_KIND: 'container_kind',
+  /** Watsonx provider config key for the container ID */
+  PROVIDER_CONFIG_CONTAINER_ID: 'container_id',
   /** Overlap ratio for long-text chunking */
   OVERLAP_RATIO: 'overlap_ratio',
   /** Maximum token limit for chunking */
@@ -73,6 +79,15 @@ export const EMBEDDINGS_LABELS = {
   MODEL_ID: 'Model ID',
   API_BASE: 'API base URL',
   API_KEY: 'API key', // pragma: allowlist secret
+  URL: 'Watsonx URL',
+  CONTAINER_KIND: 'Container type',
+  CONTAINER_ID: 'Container ID',
   OVERLAP_RATIO: 'Overlap ratio',
   TOKEN_LIMIT: 'Token limit',
 } as const;
+
+/**
+ * Valid `container_kind` values for the watsonx provider.
+ */
+export const WATSONX_CONTAINER_KINDS = ['project', 'space'] as const;
+export type WatsonxContainerKind = typeof WATSONX_CONTAINER_KINDS[number];

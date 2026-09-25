@@ -92,3 +92,8 @@ export const CHUNKER_LABELS = {
   USE_DOCLING_SERVE: 'Use Docling Serve (remote)',
   PROVIDER_CONFIG: 'Docling Serve configuration (JSON)',
 } as const;
+
+/** Description shown at the top of the Summarization accordion item. */
+export const SUMMARIZATION_DESCRIPTION =
+  'When enabled, an LLM generates a concise summary for each chunk after splitting. '
+  + 'Select a provider and configure its connection settings below.';

@@ -14,7 +14,6 @@ import { useDateTimeFormatter } from '@/utils/dateTimeUtils';
 import { formatDateTime } from '@/utils/formatters';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { useTheme } from '@/hooks';
 import type { AppDispatch } from '@/store';
 import { ErrorEmptyState } from '@carbon/ibm-products';
 import { getProject } from '@/services/api';
@@ -63,7 +62,13 @@ import { getOperatorMetadata as selectOperatorMetadata } from '@/slices/operator
 import { useBreadcrumbActions } from '@/contexts';
 import { fetchFlow, saveFlow, clearFlow, setFlowRunProperties, setCurrentFlow, updateFlow } from '@/slices/flowSlice';
 import { patchFlow } from '@/services/api';
-import { useAppSelector, useNotify, useNodeSuggestion, useJobRunPoller } from '@/hooks';
+import {
+  useAppSelector,
+  useNotify,
+  useNodeSuggestion,
+  useJobRunPoller,
+  useTheme,
+} from '@/hooks';
 import { selectCurrentFlow, selectFlowError, selectFlowRunProperties } from '@/selectors';
 import { selectCurrentJobRunId, selectCurrentJobId, selectIsRunning } from '@/selectors/jobRunSelectors';
 import { createJobRun, cancelJobRun } from '@/services/api/actions/job-run-actions';
@@ -991,7 +996,7 @@ export function Canvas(): React.JSX.Element {
         // providers style (e.g. vectordb/embeddings provider_config)
         if (value === undefined && attr.providers && activeProvider) {
           const providerSchema = attr.providers[activeProvider];
-          if (providerSchema) {
+          if (providerSchema?.properties) {
             const built: Record<string, unknown> = {};
             for (const [k, propDef] of Object.entries(providerSchema.properties)) {
               if (propDef.default !== undefined) { built[k] = propDef.default; }

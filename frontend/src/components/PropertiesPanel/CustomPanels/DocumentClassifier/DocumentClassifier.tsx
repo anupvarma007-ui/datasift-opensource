@@ -23,10 +23,12 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { getRequiredParamValidator } from '@/utils/requiredParamValidation';
-import { RequiredParamTooltip, VaultInput } from '@/components/common';
-import { isVaultReference } from '@/utils/vault';
-import { isValidJsonObject, toJsonString } from '@/utils/json';
+import { RequiredParamTooltip } from '@/components/common';
+import { JsonTextArea } from '@/components/common/JsonTextArea/JsonTextArea';
+import { ProviderFieldsForm } from '../shared/ProviderFieldsForm';
 import {
+  Accordion,
+  AccordionItem,
   DefinitionTooltip,
   Dropdown,
   FilterableMultiSelect,
@@ -43,6 +45,8 @@ import { NodeOperator } from '@/constants/operators';
 import {
   DOCUMENT_CLASSIFIER_ATTRIBUTE as ATTR,
   DOCUMENT_CLASSIFIER_LABELS as LABEL,
+  PROVIDER_CONFIG_DESCRIPTION,
+  CLASSIFICATION_CONFIG_DESCRIPTION,
 } from './constants';
 import common from '../../CommonPropertiesPanel.module.scss';
 
@@ -105,21 +109,27 @@ export function DocumentClassifierPanelBody({
   const providerValidValues = (nodeAttributes[ATTR.PROVIDER] as Record<string, unknown> | undefined)?.valid_values;
   const providerItems: string[] = Array.isArray(providerValidValues) ? (providerValidValues as string[]) : [];
 
+  // ── Provider-specific field schema from provider_config metadata ──
+  const providerConfigAttr = nodeAttributes[ATTR.PROVIDER_CONFIG];
+  const providerSchemas = providerConfigAttr?.providers ?? {};
+
   // ── Read current saved values from Elyra, falling back to backend defaults ──
 
   const provider: string | undefined =
     (controller?.getPropertyValue?.({ name: ATTR.PROVIDER }) as string | undefined)
     ?? (nodeAttributes[ATTR.PROVIDER]?.default as string | undefined);
 
-  const providerConfigRaw = controller?.getPropertyValue?.({ name: ATTR.PROVIDER_CONFIG });
-  const providerConfigDefault = nodeAttributes[ATTR.PROVIDER_CONFIG]?.default;
-  const providerConfig = (typeof providerConfigRaw === 'string'
-    ? providerConfigRaw
-    : typeof providerConfigRaw === 'object' && providerConfigRaw !== null
-      ? JSON.stringify(providerConfigRaw, null, 2)
-      : typeof providerConfigDefault === 'string'
-        ? providerConfigDefault
-        : '') ?? '';
+  const providerConfigRaw = controller?.getPropertyValue?.({ name: ATTR.PROVIDER_CONFIG }) as
+    | Record<string, unknown>
+    | null
+    | undefined;
+
+  // ── Per-provider structured field state ──
+  const [providerFieldValues, setProviderFieldValues] = useState<Record<string, unknown>>(
+    (typeof providerConfigRaw === 'object' && providerConfigRaw !== null)
+      ? providerConfigRaw
+      : {}
+  );
 
   // document_types stored as a string array
   const documentTypesRaw = controller?.getPropertyValue?.({ name: ATTR.DOCUMENT_TYPES })
@@ -162,7 +172,7 @@ export function DocumentClassifierPanelBody({
   // ── Required param validation ─────────────────────────────────────────────
   const validate = getRequiredParamValidator(nodeAttributes);
   const providerValidation = validate(ATTR.PROVIDER, provider);
-  const providerConfigValidation = validate(ATTR.PROVIDER_CONFIG, providerConfig);
+  const providerConfigValidation = validate(ATTR.PROVIDER_CONFIG, providerConfigRaw ?? null);
   const documentTypesValidation = validate(ATTR.DOCUMENT_TYPES, documentTypesRaw);
   const confidenceThresholdValidation = validate(ATTR.CONFIDENCE_THRESHOLD, confidenceThreshold);
   const outputColumnValidation = validate(ATTR.OUTPUT_COLUMN, outputColumn);
@@ -171,7 +181,7 @@ export function DocumentClassifierPanelBody({
   return (
     <div className={common.commonPropertiesPanelBody}>
 
-      {/* ── Provider ─────────────────────────────────────────────────── */}
+      {/* ── Provider dropdown — always visible ───────────────────────── */}
       <div className={common.formField}>
         <div className={common.labelWithTooltip}>
           <RequiredParamTooltip
@@ -192,6 +202,8 @@ export function DocumentClassifierPanelBody({
           onChange={({ selectedItem }: { selectedItem: string | null }) => {
             if (selectedItem) {
               controller?.updatePropertyValue?.({ name: ATTR.PROVIDER }, selectedItem);
+              controller?.updatePropertyValue?.({ name: ATTR.PROVIDER_CONFIG }, null);
+              setProviderFieldValues({});
             }
           }}
           invalid={providerValidation.isInvalid}
@@ -199,240 +211,252 @@ export function DocumentClassifierPanelBody({
         />
       </div>
 
-      {/* TODO: Provider config fields should be dynamic based on the selected provider.
-          Each provider (e.g. ollama, watsonx, openai) has a different set of required
-          config keys. This field should render provider-specific inputs rather than a
-          generic JSON textarea once the per-provider config schema is available. */}
-      <div className={common.formField}>
-        <VaultInput
-          id="provider_config"
-          labelText={LABEL.PROVIDER_CONFIG}
-          labelComponent={
-            <RequiredParamTooltip
-              paramId={ATTR.PROVIDER_CONFIG}
-              nodeAttributes={nodeAttributes}
-              definition={nodeAttributes[ATTR.PROVIDER_CONFIG]?.description ?? ''}
-            >
-              {LABEL.PROVIDER_CONFIG}
-            </RequiredParamTooltip>
-          }
-          multiline
-          rows={3}
-          defaultValue={toJsonString(nodeAttributes[ATTR.PROVIDER_CONFIG]?.default)}
-          value={providerConfig}
-          invalid={
-            providerConfigValidation.isInvalid ||
-            Boolean(
-              providerConfig.trim() !== '' &&
-              !isVaultReference(providerConfig) &&
-              !isValidJsonObject(providerConfig)
-            )
-          }
-          invalidText={
-            providerConfigValidation.isInvalid
-              ? providerConfigValidation.errorMessage
-              : 'Must be a valid JSON object or a vault:// reference.'
-          }
-          placeholder='{"model": "ollama/mistral", "api_base": "http://localhost:11434"}'
-          onChange={(v: string) => {
-            if (v === '') {
-              controller?.updatePropertyValue?.({ name: ATTR.PROVIDER_CONFIG }, null);
-            } else if (isVaultReference(v)) {
-              controller?.updatePropertyValue?.({ name: ATTR.PROVIDER_CONFIG }, v);
-            } else if (isValidJsonObject(v)) {
-              try {
-                controller?.updatePropertyValue?.({ name: ATTR.PROVIDER_CONFIG }, JSON.parse(v) as Record<string, unknown>);
-              } catch {
-                controller?.updatePropertyValue?.({ name: ATTR.PROVIDER_CONFIG }, v);
-              }
-            } else {
-              controller?.updatePropertyValue?.({ name: ATTR.PROVIDER_CONFIG }, v);
-            }
-          }}
-        />
-      </div>
+      <Accordion align="start">
 
-      {/* ── Document types ───────────────────────────────────────────── */}
-      <div className={common.formField}>
-        <div className={common.labelWithTooltip}>
-          <RequiredParamTooltip
-            paramId={ATTR.DOCUMENT_TYPES}
-            nodeAttributes={nodeAttributes}
-            definition={nodeAttributes[ATTR.DOCUMENT_TYPES]?.description ?? ''}
-          >
-            {LABEL.DOCUMENT_TYPES}
-          </RequiredParamTooltip>
-        </div>
+        {/* ── Provider configuration ──────────────────────────────────── */}
+        <AccordionItem title="Provider configuration">
+          <div className={common.accordionContent}>
 
-        {classesLoading && (
-          <InlineLoading description="Loading document types..." />
-        )}
+            <p className={common.accordionDescription}>{PROVIDER_CONFIG_DESCRIPTION}</p>
 
-        {!classesLoading && classesError && (
-          <>
-            <InlineNotification
-              kind="warning"
-              title=""
-              subtitle={classesError}
-              lowContrast
-              hideCloseButton
-            />
-            <TextArea
-              id="document_types_fallback"
-              labelText={LABEL.DOCUMENT_TYPES}
-              hideLabel
-              placeholder="invoice, contract, report, email"
-              value={Array.isArray(documentTypesRaw) ? documentTypesRaw.join(', ') : (typeof documentTypesRaw === 'string' ? documentTypesRaw : '')}
-              rows={2}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                const types = e.target.value.split(',').map((s) => s.trim()).filter(Boolean);
-                controller?.updatePropertyValue?.({ name: ATTR.DOCUMENT_TYPES }, types);
-              }}
-            />
-          </>
-        )}
+            {/* Structured fields when provider schema is available */}
+            {provider && (
+              <div className={common.subSection}>
+                {providerSchemas[provider]?.properties && (
+                  <ProviderFieldsForm
+                    properties={providerSchemas[provider].properties}
+                    values={providerFieldValues}
+                    onChange={(fieldKey, value) => {
+                      const updated = { ...providerFieldValues, [fieldKey]: value };
+                      setProviderFieldValues(updated);
+                      controller?.updatePropertyValue?.({ name: ATTR.PROVIDER_CONFIG }, updated);
+                    }}
+                  />
+                )}
 
-        {!classesLoading && !classesError && (
-          <FilterableMultiSelect
-            id="document_types"
-            titleText={LABEL.DOCUMENT_TYPES}
-            hideLabel
-            placeholder="Select document types"
-            items={documentClassItems}
-            itemToString={(item: DocumentClassItem | null) => item?.document_type ?? ''}
-            initialSelectedItems={initialSelectedItems}
-            onChange={({ selectedItems }: { selectedItems: DocumentClassItem[] }) => {
-              const value = selectedItems.map((item) => item.document_type);
-              controller?.updatePropertyValue?.({ name: ATTR.DOCUMENT_TYPES }, value);
-            }}
-            invalid={documentTypesValidation.isInvalid}
-            invalidText={documentTypesValidation.errorMessage}
-          />
-        )}
-      </div>
+                {!providerSchemas[provider]?.properties && (
+                  <div className={common.formField}>
+                    <div className={common.labelWithTooltip}>
+                      <RequiredParamTooltip
+                        paramId={ATTR.PROVIDER_CONFIG}
+                        nodeAttributes={nodeAttributes}
+                        definition={nodeAttributes[ATTR.PROVIDER_CONFIG]?.description ?? ''}
+                      >
+                        {LABEL.PROVIDER_CONFIG}
+                      </RequiredParamTooltip>
+                    </div>
+                    <JsonTextArea
+                      id="provider_config"
+                      labelText={LABEL.PROVIDER_CONFIG}
+                      placeholder='{"model": "ollama/mistral", "api_base": "http://localhost:11434"}'
+                      storedValue={typeof providerConfigRaw === 'object' ? providerConfigRaw : null}
+                      rows={3}
+                      invalid={providerConfigValidation.isInvalid}
+                      invalidText={providerConfigValidation.errorMessage}
+                      onChange={(value) => {
+                        controller?.updatePropertyValue?.({ name: ATTR.PROVIDER_CONFIG }, value);
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
-      {/* ── Confidence threshold ─────────────────────────────────────── */}
-      <div className={common.formField}>
-        <div className={common.labelWithTooltip}>
-          <RequiredParamTooltip
-            paramId={ATTR.CONFIDENCE_THRESHOLD}
-            nodeAttributes={nodeAttributes}
-            definition={nodeAttributes[ATTR.CONFIDENCE_THRESHOLD]?.description ?? ''}
-          >
-            {LABEL.CONFIDENCE_THRESHOLD}
-          </RequiredParamTooltip>
-        </div>
-        <NumberInput
-          id="confidence_threshold"
-          label={LABEL.CONFIDENCE_THRESHOLD}
-          hideLabel
-          value={confidenceThreshold}
-          min={1}
-          max={10}
-          step={0.5}
-          onChange={(_e: unknown, { value }: { value: number | string }) => {
-            controller?.updatePropertyValue?.({ name: ATTR.CONFIDENCE_THRESHOLD }, Number(value));
-          }}
-          invalid={confidenceThresholdValidation.isInvalid}
-          invalidText={confidenceThresholdValidation.errorMessage}
-        />
-      </div>
-
-      {/* ── Output ───────────────────────────────────────────────────── */}
-      <div className={common.formField}>
-        <div className={common.labelWithTooltip}>
-          <RequiredParamTooltip
-            paramId={ATTR.OUTPUT_COLUMN}
-            nodeAttributes={nodeAttributes}
-            definition={nodeAttributes[ATTR.OUTPUT_COLUMN]?.description ?? ''}
-          >
-            {LABEL.OUTPUT_COLUMN}
-          </RequiredParamTooltip>
-        </div>
-        <TextInput
-          id="output_column"
-          labelText={LABEL.OUTPUT_COLUMN}
-          hideLabel
-          value={outputColumn}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            controller?.updatePropertyValue?.({ name: ATTR.OUTPUT_COLUMN }, e.target.value);
-          }}
-          invalid={outputColumnValidation.isInvalid}
-          invalidText={outputColumnValidation.errorMessage}
-        />
-      </div>
-
-      <div className={common.toggleRow}>
-        <div className={common.formField}>
-          <div className={common.labelWithTooltip}>
-            <DefinitionTooltip
-              definition={nodeAttributes[ATTR.INCLUDE_CONFIDENCE]?.description ?? ''}
-              openOnHover
-              align="right"
-            >
-              {LABEL.INCLUDE_CONFIDENCE}
-            </DefinitionTooltip>
           </div>
-          <Toggle
-            id="include_confidence"
-            labelText={LABEL.INCLUDE_CONFIDENCE}
-            hideLabel
-            labelA="Off"
-            labelB="On"
-            toggled={includeConfidence}
-            onToggle={(checked: boolean) => {
-              controller?.updatePropertyValue?.({ name: ATTR.INCLUDE_CONFIDENCE }, checked);
-            }}
-          />
-        </div>
+        </AccordionItem>
 
-        <div className={common.formField}>
-          <div className={common.labelWithTooltip}>
-            <DefinitionTooltip
-              definition={nodeAttributes[ATTR.INCLUDE_REASONING]?.description ?? ''}
-              openOnHover
-              align="right"
-            >
-              {LABEL.INCLUDE_REASONING}
-            </DefinitionTooltip>
+        {/* ── Classification configuration ─────────────────────────────── */}
+        <AccordionItem title="Classification configuration">
+          <div className={common.accordionContent}>
+
+            <p className={common.accordionDescription}>{CLASSIFICATION_CONFIG_DESCRIPTION}</p>
+
+            {/* Document types */}
+            <div className={common.formField}>
+              <div className={common.labelWithTooltip}>
+                <RequiredParamTooltip
+                  paramId={ATTR.DOCUMENT_TYPES}
+                  nodeAttributes={nodeAttributes}
+                  definition={nodeAttributes[ATTR.DOCUMENT_TYPES]?.description ?? ''}
+                >
+                  {LABEL.DOCUMENT_TYPES}
+                </RequiredParamTooltip>
+              </div>
+
+              {classesLoading && (
+                <InlineLoading description="Loading document types..." />
+              )}
+
+              {!classesLoading && classesError && (
+                <>
+                  <InlineNotification
+                    kind="warning"
+                    title=""
+                    subtitle={classesError}
+                    lowContrast
+                    hideCloseButton
+                  />
+                  <TextArea
+                    id="document_types_fallback"
+                    labelText={LABEL.DOCUMENT_TYPES}
+                    hideLabel
+                    placeholder="invoice, contract, report, email"
+                    value={Array.isArray(documentTypesRaw) ? documentTypesRaw.join(', ') : (typeof documentTypesRaw === 'string' ? documentTypesRaw : '')}
+                    rows={2}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                      const types = e.target.value.split(',').map((s) => s.trim()).filter(Boolean);
+                      controller?.updatePropertyValue?.({ name: ATTR.DOCUMENT_TYPES }, types);
+                    }}
+                  />
+                </>
+              )}
+
+              {!classesLoading && !classesError && (
+                <FilterableMultiSelect
+                  id="document_types"
+                  titleText={LABEL.DOCUMENT_TYPES}
+                  hideLabel
+                  placeholder="Select document types"
+                  items={documentClassItems}
+                  itemToString={(item: DocumentClassItem | null) => item?.document_type ?? ''}
+                  initialSelectedItems={initialSelectedItems}
+                  onChange={({ selectedItems }: { selectedItems: DocumentClassItem[] }) => {
+                    const value = selectedItems.map((item) => item.document_type);
+                    controller?.updatePropertyValue?.({ name: ATTR.DOCUMENT_TYPES }, value);
+                  }}
+                  invalid={documentTypesValidation.isInvalid}
+                  invalidText={documentTypesValidation.errorMessage}
+                />
+              )}
+            </div>
+
+            {/* Confidence threshold */}
+            <div className={common.formField}>
+              <div className={common.labelWithTooltip}>
+                <RequiredParamTooltip
+                  paramId={ATTR.CONFIDENCE_THRESHOLD}
+                  nodeAttributes={nodeAttributes}
+                  definition={nodeAttributes[ATTR.CONFIDENCE_THRESHOLD]?.description ?? ''}
+                >
+                  {LABEL.CONFIDENCE_THRESHOLD}
+                </RequiredParamTooltip>
+              </div>
+              <NumberInput
+                id="confidence_threshold"
+                label={LABEL.CONFIDENCE_THRESHOLD}
+                hideLabel
+                value={confidenceThreshold}
+                min={1}
+                max={10}
+                step={0.5}
+                onChange={(_e: unknown, { value }: { value: number | string }) => {
+                  controller?.updatePropertyValue?.({ name: ATTR.CONFIDENCE_THRESHOLD }, Number(value));
+                }}
+                invalid={confidenceThresholdValidation.isInvalid}
+                invalidText={confidenceThresholdValidation.errorMessage}
+              />
+            </div>
+
+            {/* Output column */}
+            <div className={common.formField}>
+              <div className={common.labelWithTooltip}>
+                <RequiredParamTooltip
+                  paramId={ATTR.OUTPUT_COLUMN}
+                  nodeAttributes={nodeAttributes}
+                  definition={nodeAttributes[ATTR.OUTPUT_COLUMN]?.description ?? ''}
+                >
+                  {LABEL.OUTPUT_COLUMN}
+                </RequiredParamTooltip>
+              </div>
+              <TextInput
+                id="output_column"
+                labelText={LABEL.OUTPUT_COLUMN}
+                hideLabel
+                value={outputColumn}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  controller?.updatePropertyValue?.({ name: ATTR.OUTPUT_COLUMN }, e.target.value);
+                }}
+                invalid={outputColumnValidation.isInvalid}
+                invalidText={outputColumnValidation.errorMessage}
+              />
+            </div>
+
+            {/* Include confidence toggle */}
+            <div className={common.formField}>
+              <div className={common.labelWithTooltip}>
+                <DefinitionTooltip
+                  definition={nodeAttributes[ATTR.INCLUDE_CONFIDENCE]?.description ?? ''}
+                  openOnHover
+                  align="right"
+                >
+                  {LABEL.INCLUDE_CONFIDENCE}
+                </DefinitionTooltip>
+              </div>
+              <Toggle
+                id="include_confidence"
+                labelText={LABEL.INCLUDE_CONFIDENCE}
+                hideLabel
+                labelA="Off"
+                labelB="On"
+                toggled={includeConfidence}
+                onToggle={(checked: boolean) => {
+                  controller?.updatePropertyValue?.({ name: ATTR.INCLUDE_CONFIDENCE }, checked);
+                }}
+              />
+            </div>
+
+            {/* Include reasoning toggle */}
+            <div className={common.formField}>
+              <div className={common.labelWithTooltip}>
+                <DefinitionTooltip
+                  definition={nodeAttributes[ATTR.INCLUDE_REASONING]?.description ?? ''}
+                  openOnHover
+                  align="right"
+                >
+                  {LABEL.INCLUDE_REASONING}
+                </DefinitionTooltip>
+              </div>
+              <Toggle
+                id="include_reasoning"
+                labelText={LABEL.INCLUDE_REASONING}
+                hideLabel
+                labelA="Off"
+                labelB="On"
+                toggled={includeReasoning}
+                onToggle={(checked: boolean) => {
+                  controller?.updatePropertyValue?.({ name: ATTR.INCLUDE_REASONING }, checked);
+                }}
+              />
+            </div>
+
+            {/* Document content column */}
+            <div className={common.formField}>
+              <div className={common.labelWithTooltip}>
+                <RequiredParamTooltip
+                  paramId={ATTR.DOC_COLUMN}
+                  nodeAttributes={nodeAttributes}
+                  definition={nodeAttributes[ATTR.DOC_COLUMN]?.description ?? ''}
+                >
+                  {LABEL.DOC_COLUMN}
+                </RequiredParamTooltip>
+              </div>
+              <TextInput
+                id="doc_column"
+                labelText={LABEL.DOC_COLUMN}
+                hideLabel
+                value={docColumn}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  controller?.updatePropertyValue?.({ name: ATTR.DOC_COLUMN }, e.target.value);
+                }}
+                invalid={docColumnValidation.isInvalid}
+                invalidText={docColumnValidation.errorMessage}
+              />
+            </div>
+
           </div>
-          <Toggle
-            id="include_reasoning"
-            labelText={LABEL.INCLUDE_REASONING}
-            hideLabel
-            labelA="Off"
-            labelB="On"
-            toggled={includeReasoning}
-            onToggle={(checked: boolean) => {
-              controller?.updatePropertyValue?.({ name: ATTR.INCLUDE_REASONING }, checked);
-            }}
-          />
-        </div>
-      </div>
+        </AccordionItem>
 
-      {/* ── Advanced ─────────────────────────────────────────────────── */}
-      <div className={common.formField}>
-        <div className={common.labelWithTooltip}>
-          <RequiredParamTooltip
-            paramId={ATTR.DOC_COLUMN}
-            nodeAttributes={nodeAttributes}
-            definition={nodeAttributes[ATTR.DOC_COLUMN]?.description ?? ''}
-          >
-            {LABEL.DOC_COLUMN}
-          </RequiredParamTooltip>
-        </div>
-        <TextInput
-          id="doc_column"
-          labelText={LABEL.DOC_COLUMN}
-          hideLabel
-          value={docColumn}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            controller?.updatePropertyValue?.({ name: ATTR.DOC_COLUMN }, e.target.value);
-          }}
-          invalid={docColumnValidation.isInvalid}
-          invalidText={docColumnValidation.errorMessage}
-        />
-      </div>
+      </Accordion>
 
     </div>
   );

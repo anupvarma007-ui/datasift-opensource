@@ -20,13 +20,14 @@ import { getRequiredParamValidator } from '@/utils/requiredParamValidation';
 import type { OperatorFeature, OperatorMetadata } from '@/types';
 import { NodeOperator } from '@/constants/operators';
 import { RequiredParamTooltip } from '@/components/common';
+import { JsonTextArea } from '@/components/common/JsonTextArea/JsonTextArea';
+import { ProviderFieldsForm } from '../shared/ProviderFieldsForm';
 import {
   Accordion,
   AccordionItem,
   DefinitionTooltip,
   Dropdown,
   NumberInput,
-  TextArea,
   TextInput,
   Toggle,
 } from '@carbon/react';
@@ -38,11 +39,11 @@ import {
   CHUNK_TYPE_LABELS,
   BREAKPOINT_THRESHOLD_TYPES,
   BREAKPOINT_THRESHOLD_TYPE_LABELS,
+  SUMMARIZATION_DESCRIPTION,
   type ChunkType,
   type BreakpointThresholdType,
 } from './constants';
 import common from '../../CommonPropertiesPanel.module.scss';
-import { isValidJsonObject } from '@/utils/json';
 
 interface ChunkerPanelBodyProps {
   controller: any;
@@ -102,14 +103,18 @@ export function ChunkerPanelBody({ controller }: ChunkerPanelBodyProps): React.J
     ?? CHUNKER_DEFAULTS.RETAIN_ORIGINAL_CONTENT;
 
   // summarization: controller stores an object (or null when disabled).
-  // Stringify only for display; null/undefined = disabled.
+  // null/undefined = disabled.
   const summarizationStored =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     controller?.getPropertyValue?.({ name: ATTR.SUMMARIZATION }) as Record<string, unknown> | null | undefined;
-  const summarizationPersisted: string =
-    summarizationStored !== null && summarizationStored !== undefined
-      ? JSON.stringify(summarizationStored)
-      : '';
+
+  // ── Summarization schema from operator metadata ──────────────────────────
+  const summarizationProperties = nodeAttributes[ATTR.SUMMARIZATION]?.properties ?? {};
+  const hasSummarizationProperties = Object.keys(summarizationProperties).length > 0;
+  const summarizationProviderConfigDef = summarizationProperties['provider_config'];
+  const summarizationProviderSchemas = summarizationProviderConfigDef?.providers ?? {};
+  const summarizationProviderItems: string[] =
+    (summarizationProperties['provider']?.valid_values) ?? [];
 
   const provider: string | null =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
@@ -119,11 +124,7 @@ export function ChunkerPanelBody({ controller }: ChunkerPanelBodyProps): React.J
   // provider_config: controller stores an object; stringify only for display.
   const providerConfigStored =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    controller?.getPropertyValue?.({ name: ATTR.PROVIDER_CONFIG }) as Record<string, unknown> | undefined;
-  const providerConfigPersisted: string =
-    providerConfigStored !== null && providerConfigStored !== undefined
-      ? JSON.stringify(providerConfigStored)
-      : '';
+    controller?.getPropertyValue?.({ name: ATTR.PROVIDER_CONFIG }) as Record<string, unknown> | null | undefined;
 
   // ── Derived state ────────────────────────────────────────────────────────
 
@@ -134,26 +135,19 @@ export function ChunkerPanelBody({ controller }: ChunkerPanelBodyProps): React.J
   const showSizeOverlap = isSimple || isHybrid;
   const summarizationEnabled = summarizationStored !== null && summarizationStored !== undefined;
 
-  // ── Local raw state for JSON textareas ───────────────────────────────────
-  // Holds the in-progress typed value independently of the persisted object so
-  // that typing invalid JSON mid-edit never wipes the field. Once the value is
-  // valid and the user blurs, local state is cleared and the persisted value
-  // drives the display.
+  // Selected provider within the summarization config
+  const summarizationProvider: string =
+    (typeof summarizationStored?.provider === 'string' ? summarizationStored.provider : null)
+    ?? (summarizationProperties['provider']?.default as string | undefined)
+    ?? 'litellm';
 
-  const [summarizationRaw, setSummarizationRaw] = useState<string | null>(null);
-  const [providerConfigRaw, setProviderConfigRaw] = useState<string | null>(null);
-
-  // ── Touched state for JSON textarea validation ───────────────────────────
-
-  type JsonField = 'summarization' | 'providerConfig';
-  const [touchedFields, setTouchedFields] = useState<Record<JsonField, boolean>>({
-    summarization: false,
-    providerConfig: false,
-  });
-
-  const markTouched = (field: JsonField): void => {
-    setTouchedFields((prev) => ({ ...prev, [field]: true }));
-  };
+  // Per-field state for the nested summarization provider_config
+  const summarizationProviderConfigStored =
+    (typeof summarizationStored?.provider_config === 'object' && summarizationStored?.provider_config !== null)
+      ? summarizationStored.provider_config as Record<string, unknown>
+      : {};
+  const [summarizationProviderConfigValues, setSummarizationProviderConfigValues] =
+    useState<Record<string, unknown>>(summarizationProviderConfigStored);
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -213,7 +207,9 @@ export function ChunkerPanelBody({ controller }: ChunkerPanelBodyProps): React.J
     (checked: boolean): void => {
       // Enable: seed with minimum meaningful object
       // Disable: write null so backend omits the key entirely.
-      update(ATTR.SUMMARIZATION, checked ? { provider: 'litellm', provider_config: {} } : null);
+      const seed = checked ? { provider: 'litellm', provider_config: {} } : null;
+      update(ATTR.SUMMARIZATION, seed);
+      setSummarizationProviderConfigValues({});
     }, [update]
   );
 
@@ -257,34 +253,16 @@ export function ChunkerPanelBody({ controller }: ChunkerPanelBodyProps): React.J
                 {LABEL.PROVIDER_CONFIG}
               </RequiredParamTooltip>
             </div>
-            <TextArea
+            <JsonTextArea
               id="chunker-provider-config"
               labelText={LABEL.PROVIDER_CONFIG}
-              hideLabel
               rows={4}
-              value={providerConfigRaw ?? providerConfigPersisted}
+              storedValue={providerConfigStored ?? null}
               placeholder='{"api_base": "https://docling-serve.example.com"}'
-              invalid={
-                providerConfigValidation.isInvalid ||
-                (touchedFields.providerConfig && !isValidJsonObject(providerConfigRaw ?? providerConfigPersisted))
-              }
-              invalidText={
-                providerConfigValidation.isInvalid
-                  ? providerConfigValidation.errorMessage
-                  : 'Provider configuration must be a valid JSON object.'
-              }
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                const raw = e.target.value;
-                setProviderConfigRaw(raw);
-                if (raw === '' || isValidJsonObject(raw)) {
-                  update(ATTR.PROVIDER_CONFIG, raw === '' ? {} : JSON.parse(raw) as object);
-                }
-              }}
-              onBlur={() => {
-                markTouched('providerConfig');
-                if (providerConfigRaw !== null && isValidJsonObject(providerConfigRaw)) {
-                  setProviderConfigRaw(null);
-                }
+              invalid={providerConfigValidation.isInvalid}
+              invalidText={providerConfigValidation.errorMessage}
+              onChange={(value) => {
+                update(ATTR.PROVIDER_CONFIG, value);
               }}
             />
           </div>
@@ -556,6 +534,9 @@ export function ChunkerPanelBody({ controller }: ChunkerPanelBodyProps): React.J
      <Accordion align="start">
         <AccordionItem title="Summarization">
           <div className={common.accordionContent}>
+
+            <p className={common.accordionDescription}>{SUMMARIZATION_DESCRIPTION}</p>
+
           <div className={common.formField}>
             <div className={common.labelWithTooltip}>
               <RequiredParamTooltip
@@ -578,51 +559,79 @@ export function ChunkerPanelBody({ controller }: ChunkerPanelBodyProps): React.J
           </div>
 
           {summarizationEnabled && (
-            <div className={common.subSection}>
-              <div className={common.formField}>
-                <div className={common.labelWithTooltip}>
-                  <RequiredParamTooltip
-                    paramId={ATTR.SUMMARIZATION}
-                    nodeAttributes={nodeAttributes}
-                    definition='Summarization configuration as a JSON object. E.g. {"provider": "litellm", "provider_config": {"model_id": "ollama/llama3.2", "api_base": "http://localhost:11434/v1"}}'
-                  >
-                    {LABEL.SUMMARIZATION_CONFIG}
-                  </RequiredParamTooltip>
+            <>
+              {hasSummarizationProperties ? (
+                <>
+                  {/* Provider dropdown */}
+                  <div className={common.formField}>
+                    <div className={common.labelWithTooltip}>
+                      <DefinitionTooltip
+                        definition={summarizationProperties['provider']?.description ?? ''}
+                        openOnHover
+                        align="right"
+                      >
+                        Provider
+                      </DefinitionTooltip>
+                    </div>
+                    <Dropdown
+                      id="chunker-summarization-provider"
+                      titleText="Provider"
+                      hideLabel
+                      label="Select provider"
+                      items={summarizationProviderItems}
+                      selectedItem={summarizationProvider}
+                      itemToString={(item: string | null) => item ?? ''}
+                      onChange={({ selectedItem }: { selectedItem: string | null }) => {
+                        if (selectedItem) {
+                          const updated = { ...summarizationStored, provider: selectedItem, provider_config: {} };
+                          update(ATTR.SUMMARIZATION, updated);
+                          setSummarizationProviderConfigValues({});
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* Provider config fields indented under provider dropdown */}
+                  {summarizationProviderSchemas[summarizationProvider]?.properties && (
+                    <div className={common.subSection}>
+                      <ProviderFieldsForm
+                        properties={summarizationProviderSchemas[summarizationProvider].properties}
+                        values={summarizationProviderConfigValues}
+                        onChange={(fieldKey, value) => {
+                          const updatedConfig = { ...summarizationProviderConfigValues, [fieldKey]: value };
+                          setSummarizationProviderConfigValues(updatedConfig);
+                          update(ATTR.SUMMARIZATION, { ...summarizationStored, provider_config: updatedConfig });
+                        }}
+                      />
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* JSON fallback when no schema is available */
+                <div className={common.formField}>
+                  <div className={common.labelWithTooltip}>
+                    <RequiredParamTooltip
+                      paramId={ATTR.SUMMARIZATION}
+                      nodeAttributes={nodeAttributes}
+                      definition='Summarization configuration as a JSON object. E.g. {"provider": "litellm", "provider_config": {"model_id": "ollama/llama3.2", "api_base": "http://localhost:11434/v1"}}'
+                    >
+                      {LABEL.SUMMARIZATION_CONFIG}
+                    </RequiredParamTooltip>
+                  </div>
+                  <JsonTextArea
+                    id="chunker-summarization-config"
+                    labelText={LABEL.SUMMARIZATION_CONFIG}
+                    rows={5}
+                    storedValue={summarizationStored ?? null}
+                    invalid={summarizationValidation.isInvalid}
+                    invalidText={summarizationValidation.errorMessage}
+                    onChange={(value) => {
+                      update(ATTR.SUMMARIZATION, value ?? null);
+                    }}
+                  />
                 </div>
-                <TextArea
-                  id="chunker-summarization-config"
-                  labelText={LABEL.SUMMARIZATION_CONFIG}
-                  hideLabel
-                  rows={5}
-                  value={summarizationRaw ?? summarizationPersisted}
-                  placeholder='{}'
-                  invalid={
-                    summarizationValidation.isInvalid ||
-                    (touchedFields.summarization && !isValidJsonObject(summarizationRaw ?? summarizationPersisted))
-                  }
-                  invalidText={
-                    summarizationValidation.isInvalid
-                      ? summarizationValidation.errorMessage
-                      : 'Summarization configuration must be a valid JSON object.'
-                  }
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                    const raw = e.target.value;
-                    setSummarizationRaw(raw);
-                    // Only persist when valid JSON. Empty string keeps local state only
-                    // so clearing the input doesn't disable summarization mid-edit.
-                    if (raw !== '' && isValidJsonObject(raw)) {
-                      update(ATTR.SUMMARIZATION, JSON.parse(raw) as object);
-                    }
-                  }}
-                  onBlur={() => {
-                    markTouched('summarization');
-                    if (summarizationRaw !== null && isValidJsonObject(summarizationRaw)) {
-                      setSummarizationRaw(null);
-                    }
-                  }}
-                />
-              </div>
-            </div>
+              )}
+            </>
           )}
           </div>
         </AccordionItem>

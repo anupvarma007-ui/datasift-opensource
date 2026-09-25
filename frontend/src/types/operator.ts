@@ -25,43 +25,30 @@ export interface ModelsResponse {
 
 // ── API wire types ───────────────────────────────────────────────────────
 
-/** Shape shared by both top-level and nested property definitions. */
-export interface OperatorPropertyDef {
-  name: string;
-  type: string;
-  description?: string;
-  required?: boolean;
-  default?: unknown;
-  valid_values?: string[];
-  sensitive?: boolean;
-}
-
 /**
  * Individual operator attribute / feature definition.
  *
- * Two compound shapes exist in the metadata:
- * - `providers` — used by vectordb/embeddings `provider_config`. Maps provider id
- *   (e.g. 'opensearch') to a schema with its own `properties` map.
- * - `properties` — used by extract `text_extraction` / `entity_extraction`. A flat
- *   map of sub-field definitions, each with their own `default`.
+ * Used both at the top level (`attributes` map) and recursively for nested fields
+ * such as `provider_config` which can carry its own `providers` and `properties`.
+ *
+ * - `providers` — maps provider id → schema with its own `properties` map.
+ * - `properties` — flat map of sub-field definitions, each typed as `OperatorFeature`
+ *   so they can themselves carry `providers` (e.g. summarization.properties.provider_config).
  */
 export interface OperatorFeature {
   type: string;
-  description: string | null;
-  required: boolean | null;
-  default: unknown;
-  available_for_filter: boolean | null;
-  available_for_vector_db: boolean | null;
+  name?: string;
+  description?: string | null;
+  required?: boolean | null;
+  default?: unknown;
+  available_for_filter?: boolean | null;
+  available_for_vector_db?: boolean | null;
   sensitive?: boolean;
-  /** provider_config style: maps provider id → schema with properties. */
-  providers?: Record<string, {
-    name: string;
-    type: string;
-    description?: string;
-    properties: Record<string, OperatorPropertyDef>;
-  }>;
-  /** text_extraction / entity_extraction style: flat map of sub-field definitions. */
-  properties?: Record<string, OperatorPropertyDef>;
+  valid_values?: string[];
+  /** Maps provider id → per-provider schema. Each entry is itself an OperatorFeature. */
+  providers?: Record<string, OperatorFeature>;
+  /** Sub-field map. Each value is itself an OperatorFeature so nesting is supported. */
+  properties?: Record<string, OperatorFeature>;
 }
 
 /**

@@ -2,7 +2,7 @@
  * @file ProviderFieldsForm
  *
  * Renders a structured per-field form driven by the provider schema embedded
- * in the `connection_params.providers[provider]` entry of the operator metadata.
+ * in the `provider_config.providers[provider]` entry of the operator metadata.
  *
  * Each field in the provider's `properties` map is rendered as the appropriate
  * Carbon input based on its `type` value:
@@ -31,7 +31,7 @@ import { DefinitionTooltip } from '@carbon/react';
 import { TagInput } from '@/components/common/TagInput/TagInput';
 import { JsonTextArea } from '@/components/common/JsonTextArea/JsonTextArea';
 import { VaultInput } from '@/components/common';
-import type { OperatorPropertyDef } from '@/types';
+import type { OperatorFeature } from '@/types';
 import common from '../../CommonPropertiesPanel.module.scss';
 
 // ── Hidden fields ─────────────────────────────────────────────────────────────
@@ -44,8 +44,8 @@ const HIDDEN_FIELDS = new Set([
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface ProviderFieldsFormProps {
-  /** Property definitions from `connection_params.providers[provider].properties`. */
-  properties: Record<string, OperatorPropertyDef>;
+  /** Property definitions from `provider_config.providers[provider].properties`. */
+  properties: Record<string, OperatorFeature>;
   /** Current field values keyed by property key. */
   values: Record<string, unknown>;
   /**
@@ -92,13 +92,38 @@ export function ProviderFieldsForm({
 }: ProviderFieldsFormProps): React.JSX.Element {
   return (
     <>
-      {Object.entries(properties).map(([fieldKey, keyInfo]) => {
+      {Object.entries(properties).map(([fieldKey, keyInfo]: [string, OperatorFeature]) => {
         if (HIDDEN_FIELDS.has(fieldKey)) {return null;}
         const label = keyInfo.name ?? fieldKey;
         const description = keyInfo.description ?? '';
         const isRequired = keyInfo.required === true;
         const labelText = isRequired ? `${label} (required)` : label;
         const inputId = `provider-field-${fieldKey}`;
+
+        // VaultInput owns its own header row.
+        const isSensitive = keyInfo.type === 'string' && keyInfo.sensitive === true;
+
+        if (isSensitive) {
+          return (
+            <div key={fieldKey} className={common.formField}>
+              <VaultInput
+                id={inputId}
+                labelText={labelText}
+                labelComponent={
+                  <DefinitionTooltip
+                    definition={description}
+                    openOnHover
+                    align="right"
+                  >
+                    {labelText}
+                  </DefinitionTooltip>
+                }
+                value={asString(values[fieldKey])}
+                onChange={(v: string) => {onChange(fieldKey, v);}}
+              />
+            </div>
+          );
+        }
 
         return (
           <div key={fieldKey} className={common.formField}>
@@ -164,17 +189,7 @@ export function ProviderFieldsForm({
               />
             )}
 
-            {/* string: sensitive → VaultInput, plain → TextInput */}
-            {keyInfo.type === 'string' && keyInfo.sensitive === true && (
-              <VaultInput
-                id={inputId}
-                labelText={label}
-                hideLabel
-                value={asString(values[fieldKey])}
-                onChange={(v: string) => {onChange(fieldKey, v);}}
-              />
-            )}
-
+            {/* string non-sensitive → TextInput */}
             {keyInfo.type === 'string' && keyInfo.sensitive !== true && (
               <TextInput
                 id={inputId}
