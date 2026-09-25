@@ -106,7 +106,7 @@ function LastSavedLabel({ date }: { date: Date | null }): React.JSX.Element {
 export function Canvas(): React.JSX.Element {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { isDarkMode, theme } = useTheme();
+  const { isDarkMode } = useTheme();
 
   // Route: /flows/:flow_id/canvas
   const { flow_id: flowId } = useParams<{ flow_id: string }>();
@@ -1559,7 +1559,6 @@ export function Canvas(): React.JSX.Element {
 
   return (
     <ErrorBoundary
-      key={theme}
       fallback={
         <div className={styles.errorContainer}>
           <p>Failed to initialize canvas. Please refresh the page.</p>
