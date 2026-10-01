@@ -78,6 +78,13 @@ timestamps {
             sudo apt-get install -y software-properties-common python3-dev gcc libldap2-dev libsasl2-dev
           fi
 
+          # Install Node.js via NodeSource apt repo (system-wide, available in all stages)
+          NODE_MAJOR=$(cat frontend/.nvmrc | cut -d. -f1)
+          curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+          node --version
+          npm --version
+
           # Pin Python 3.12 via uv (no Miniconda download needed)
           uv python install 3.12
           uv sync --all-groups --all-extras --python 3.12
@@ -231,6 +238,28 @@ timestamps {
                   export PATH="\${HOME}/.cargo/bin:\$PATH"
                   . .venv/bin/activate
 
+                  # ── Slim wheel ───────────────────────────────────────────────
+                  # Build the slim wheel from the slim/ sub-project
+                  uv build --wheel --project slim
+
+                  # Find the generated slim wheel file
+                  SLIM_WHEEL_FILE=\$(ls -t slim/dist/*.whl | head -n 1)
+                  SLIM_WHEEL_FILENAME=\$(basename "\$SLIM_WHEEL_FILE")
+
+                  echo "Built slim wheel: \$SLIM_WHEEL_FILENAME"
+
+                  # Push slim wheel to Artifactory (versioned path)
+                  curl -u "\${ARTIFACTORY_USERNAME}:\${ARTIFACTORY_PASSWORD}" \\
+                    -T "\$SLIM_WHEEL_FILE" \\
+                    "https://na-public.artifactory.swg-devops.com/artifactory/dataconn-maven-local/docling-pipelines/${VERSION}/\${SLIM_WHEEL_FILENAME}"
+
+                  # Push slim wheel to Artifactory (fixed path — always points to latest)
+                  curl -u "\${ARTIFACTORY_USERNAME}:\${ARTIFACTORY_PASSWORD}" \\
+                    -T "\$SLIM_WHEEL_FILE" \\
+                    "https://na-public.artifactory.swg-devops.com/artifactory/dataconn-maven-local/docling-pipelines/\${SLIM_WHEEL_FILENAME}"
+
+                  echo "Slim wheel file pushed to Artifactory successfully"
+
                   # ── Main wheel ──────────────────────────────────────────────
                   # Build the wheel using uv
                   uv build --wheel
@@ -264,28 +293,6 @@ print('Wheel content OK — static assets and BFF bundle present')
                     "https://na-public.artifactory.swg-devops.com/artifactory/dataconn-maven-local/docling-pipelines/${VERSION}/\${WHEEL_FILENAME}"
 
                   echo "Wheel file pushed to Artifactory successfully"
-
-                  # ── Slim wheel ───────────────────────────────────────────────
-                  # Build the slim wheel from the slim/ sub-project
-                  uv build --wheel --project slim
-
-                  # Find the generated slim wheel file
-                  SLIM_WHEEL_FILE=\$(ls -t slim/dist/*.whl | head -n 1)
-                  SLIM_WHEEL_FILENAME=\$(basename "\$SLIM_WHEEL_FILE")
-
-                  echo "Built slim wheel: \$SLIM_WHEEL_FILENAME"
-
-                  # Push slim wheel to Artifactory (versioned path)
-                  curl -u "\${ARTIFACTORY_USERNAME}:\${ARTIFACTORY_PASSWORD}" \\
-                    -T "\$SLIM_WHEEL_FILE" \\
-                    "https://na-public.artifactory.swg-devops.com/artifactory/dataconn-maven-local/docling-pipelines/${VERSION}/\${SLIM_WHEEL_FILENAME}"
-
-                  # Push slim wheel to Artifactory (fixed path — always points to latest)
-                  curl -u "\${ARTIFACTORY_USERNAME}:\${ARTIFACTORY_PASSWORD}" \\
-                    -T "\$SLIM_WHEEL_FILE" \\
-                    "https://na-public.artifactory.swg-devops.com/artifactory/dataconn-maven-local/docling-pipelines/\${SLIM_WHEEL_FILENAME}"
-
-                  echo "Slim wheel file pushed to Artifactory successfully"
                 """
               }
             }
