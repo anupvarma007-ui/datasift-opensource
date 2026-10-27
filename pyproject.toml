@@ -17,7 +17,7 @@ dependencies = [
     "data-prep-toolkit-transforms==1.1.8",
     "datatrove==0.10.0",
     "datefinder==1.0.0",
-    "docling[rapidocr]==2.132.0",
+    "docling[rapidocr]==2.142.1",
     "duckdb==1.3.2",
     "fastapi==0.141.1",
     "fasttext-numpy2==0.10.4",
@@ -53,7 +53,7 @@ dependencies = [
     "orjson==3.13.0",
     "pandas==2.3.3",
     "passlib[bcrypt]==1.7.4",
-    "pillow==12.3.0",
+    "pillow==13.0.0",
     "polars==1.32.3",
     "prefect==3.8.3",
     "psycopg2-binary==2.9.12",
@@ -76,7 +76,7 @@ dependencies = [
     "pyyaml==6.0.3",
     "requests==2.34.2",
     "sentence-transformers==5.6.0",
-    "setuptools==84.0.0",
+    "setuptools==84.2.1",
     "spacy>=3.7.4",
     "sqlalchemy==2.0.49",
     "sqlglot==27.13.2",
@@ -132,23 +132,23 @@ telemetry = [
 ]
 
 rapidocr = [
-    "docling[rapidocr]==2.132.0",
+    "docling[rapidocr]==2.142.1",
 ]
 
 easyocr = [
-    "docling[easyocr]==2.132.0",
+    "docling[easyocr]==2.142.1",
 ]
 
 ocrmac = [
-    "docling[ocrmac]==2.132.0",
+    "docling[ocrmac]==2.142.1",
 ]
 
 tesserocr = [
-    "docling[tesserocr]==2.132.0",
+    "docling[tesserocr]==2.142.1",
 ]
 
 vlm_asr = [
-    "docling[vlm,asr]==2.132.0",
+    "docling[vlm,asr]==2.142.1",
 ]
 
 [project.scripts]
