@@ -4,10 +4,11 @@
  */
 
 import React, { useState } from 'react';
-import { Button } from '@carbon/react';
-import { Close, WarningAlt, ErrorFilled, ChevronRight, ChevronDown, Copy } from '@carbon/react/icons';
+import { Button, CopyButton } from '@carbon/react';
+import { Close, WarningAlt, ErrorFilled, ChevronRight, ChevronDown } from '@carbon/react/icons';
 import { SharedDataTable } from '@/components/common/SharedDataTable';
 import type { SharedDataTableHeader, SharedDataTableRow } from '@/components/common/SharedDataTable';
+import { COPY_TOOLTIP, COPY_FEEDBACK, COPY_FEEDBACK_TIMEOUT_MS } from '@/constants/copyToClipboard';
 import styles from './BottomNotificationPanel.module.scss';
 import {
   COLUMN_KEYS,
@@ -15,7 +16,6 @@ import {
   NOTIFICATION_TYPES,
   DEFAULT_VALUES,
   ARIA_LABELS,
-  BUTTON_TITLES,
 } from '@/constants/notificationPanel';
 
 export interface NotificationItem {
@@ -137,15 +137,13 @@ const BottomNotificationPanel: React.FC<BottomNotificationPanelProps> = ({
       return (
         <div className={styles.descriptionCell}>
           <span className={styles.descriptionText}>{cell.value}</span>
-          <button
-            type="button"
-            className={styles.copyButton}
+          <CopyButton
+            iconDescription={COPY_TOOLTIP}
+            feedback={COPY_FEEDBACK}
+            feedbackTimeout={COPY_FEEDBACK_TIMEOUT_MS}
             onClick={() => { handleCopy(fullMessage); }}
-            aria-label={ARIA_LABELS.COPY_DESCRIPTION}
-            title={BUTTON_TITLES.COPY_TO_CLIPBOARD}
-          >
-            <Copy size={16} />
-          </button>
+            autoAlign
+          />
         </div>
       );
     }

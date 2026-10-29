@@ -207,29 +207,6 @@
   color: $text-primary;
 }
 
-.copyButton {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: $spacing-01;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: $icon-secondary;
-  flex-shrink: 0;
-  border-radius: 2px;
-
-  &:hover {
-    color: $text-primary;
-    background-color: $layer-hover-01;
-  }
-
-  &:focus {
-    outline: 2px solid $focus;
-    outline-offset: 1px;
-  }
-}
-
 // ── Expanded detail row ───────────────────────────────────────────────────────
 // Rendered as a <tr> immediately after the data row inside the same <tbody>
 // via SharedDataTable's renderRowExtras prop.

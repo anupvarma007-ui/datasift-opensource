@@ -40,13 +40,7 @@ export const DEFAULT_VALUES = {
 export const ARIA_LABELS = {
   EXPAND_ROW: 'Expand row',
   COLLAPSE_ROW: 'Collapse row',
-  COPY_DESCRIPTION: 'Copy description',
   CLOSE: 'Close',
-} as const;
-
-// Button titles
-export const BUTTON_TITLES = {
-  COPY_TO_CLIPBOARD: 'Copy to clipboard',
 } as const;
 
 // Keys used for client-side search in the notification table

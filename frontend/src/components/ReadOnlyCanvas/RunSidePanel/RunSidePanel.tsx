@@ -11,6 +11,7 @@ import React, { useState, useCallback } from 'react';
 import { CopyButton } from '@carbon/react';
 import { Close, Download } from '@carbon/icons-react';
 import type { JobRunStatusResponse } from '@/types';
+import { COPY_TOOLTIP, COPY_FEEDBACK, COPY_FEEDBACK_TIMEOUT_MS } from '@/constants/copyToClipboard';
 import { JOB_RUN_STATUS } from '@/constants/jobRunStatus';
 import {
   TAB_LABEL_LOG_DETAILS,
@@ -148,9 +149,10 @@ export function RunSidePanel({
               <h4>{showFullLogTitle}</h4>
               <div className={styles.fullLogHeaderActions}>
                 <CopyButton
-                  onClick={() => {
-                    void navigator.clipboard.writeText(showFullLog ?? '').catch(() => {});
-                  }}
+                  iconDescription={COPY_TOOLTIP}
+                  feedback={COPY_FEEDBACK}
+                  feedbackTimeout={COPY_FEEDBACK_TIMEOUT_MS}
+                  onClick={() => { void navigator.clipboard.writeText(showFullLog).catch(() => {}); }}
                 />
                 <button
                   className={styles.closeButton}

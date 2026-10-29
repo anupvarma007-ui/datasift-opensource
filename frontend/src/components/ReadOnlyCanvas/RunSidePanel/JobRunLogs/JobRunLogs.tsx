@@ -12,6 +12,7 @@
 import React, { useMemo, useEffect, useRef, useCallback } from 'react';
 import { Accordion, AccordionItem, CopyButton, InlineNotification } from '@carbon/react';
 import type { JobRunStatusResponse } from '@/types';
+import { COPY_TOOLTIP, COPY_FEEDBACK, COPY_FEEDBACK_TIMEOUT_MS } from '@/constants/copyToClipboard';
 import { JOB_RUN_STATUS } from '@/constants/jobRunStatus';
 import { LOG_SCROLL_DELAY_MS, LOG_PREVIEW_THRESHOLD } from '@/constants/runSidePanel';
 import styles from './JobRunLogs.module.scss';
@@ -125,6 +126,9 @@ export function JobRunLogs({
                   <div className={styles.logRow}>
                     <div className={styles.displayedLogContent}>{displayedLog}</div>
                     <CopyButton
+                      iconDescription={COPY_TOOLTIP}
+                      feedback={COPY_FEEDBACK}
+                      feedbackTimeout={COPY_FEEDBACK_TIMEOUT_MS}
                       onClick={() => { void navigator.clipboard.writeText(fullLog).catch(() => {}); }}
                       autoAlign
                     />
